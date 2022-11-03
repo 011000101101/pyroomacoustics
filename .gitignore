@@ -10,3 +10,6 @@ docs/_build
 dist/
 local_examples/
 *.ipynb_checkpoints
+
+venv/
+pyroomacoustics/build_rir.c
