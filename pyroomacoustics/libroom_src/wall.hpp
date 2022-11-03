@@ -123,7 +123,31 @@ class Wall
     float cosine_angle(   // cosine angle with respect to surface normal
         const Vectorf<D> &p
         ) const;
-}; 
+};
+
+class WallWithHoles: public Wall<3>
+{
+  public:
+    // Wall geometry properties
+    Vector<Eigen::Matrix<float, 3, Eigen::Dynamic> *> hole_corners;
+
+    /*
+    // Constructor
+    WallWithHoles(
+            const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+            const  Vector<Eigen::Matrix<float, 3, Eigen::Dynamic> *> &_hole_corners;
+            const Eigen::ArrayXf &_absorption,
+            const Eigen::ArrayXf &_scatter,
+            const std::string &_name
+    );
+    WallWithHoles(
+            const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+            const  Vector<Eigen::Matrix<float, 3, Eigen::Dynamic> *> &_hole_corners;
+            const Eigen::ArrayXf &_absorption,
+            const Eigen::ArrayXf &_scatter
+    ) : WallWithHoles(_corners, _hole_corners, _absorption, _scatter, "") {}
+     */
+};
 
 #include "wall.cpp"
 
