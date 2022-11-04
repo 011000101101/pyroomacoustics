@@ -37,10 +37,133 @@ extern float libroom_eps;
 #define WALL_ISECT_VALID_BNDRY  2  // if the intersection is at boundary of polygon
 #define ENDPOINT_BOUNDARY       3  // if both the above are true
 
+//enum class Isect {  // The different cases for intersections
+//    NONE = -1,  // - There is no intersection
+//    VALID = 0,  // - There is a valid intersection
+//    ENDPT = 1,  // - The intersection is on the endpoint of the segment
+//    BNDRY = 2   // - The intersection is on the boundary of the wall
+//};
+
+//class Polygon
+//{
+//    private:
+//
+//    public:
+//
+//        // Wall geometry properties
+//        Eigen::Matrix<float, 3, 1>  normal;
+//        Eigen::Matrix<float, 3, Eigen::Dynamic> corners;
+//
+//        /* for 3D wall, provide local basis for plane of wall */
+//        Eigen::Matrix<float, 3, 1> origin;
+//        Eigen::Matrix<float, 3, 2> basis;
+//        Eigen::Matrix<float, 2, Eigen::Dynamic> flat_corners;
+//
+////        // Constructor
+////        Polygon(
+////                const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+////                const Eigen::ArrayXf &_absorption,
+////                const Eigen::ArrayXf &_scatter,
+////                const std::string &_name
+////        );
+////        Wall(
+////                const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+////                const Eigen::ArrayXf &_absorption,
+////                const Eigen::ArrayXf &_scatter
+////        ) : Wall(_corners, _absorption, _scatter, "") {}
+//
+//        virtual float area() const = 0;  // compute the area of the wall
+////        virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+////                const Vectorf<3> &p1,
+////                const Vectorf<3> &p2,
+////                Eigen::Ref<Vectorf<3>> intersection
+////        ) const;
+//
+////        virtual int reflect(
+////                const Vectorf<3> &p,
+////                Eigen::Ref<Vectorf<3>> p_reflected
+////        ) const;
+////        virtual int side(const Vectorf<3> &p) const;
+////        virtual bool same_as(const Wall & that) const;
+////
+////        virtual Vectorf<3> normal_reflect(
+////                const Vectorf<3> &start,
+////                const Vectorf<3> &hit_point,
+////                float length) const;
+////
+////        virtual Vectorf<3> normal_reflect(const Vectorf<3> &incident) const;
+////
+////        virtual float cosine_angle(   // cosine angle with respect to surface normal
+////                const Vectorf<3> &p
+////        ) const;
+//};
+//
+//class SimplePolygon : public Polygon
+//{
+//private:
+//
+//public:
+//
+//    // Constructor
+////    SimplePolygon(
+////            const Eigen::Matrix<float, D, Eigen::Dynamic> &_corners,
+////            const Eigen::ArrayXf &_absorption,
+////            const Eigen::ArrayXf &_scatter,
+////            const std::string &_name
+////    );
+////    Wall(
+////            const Eigen::Matrix<float, D, Eigen::Dynamic> &_corners,
+////            const Eigen::ArrayXf &_absorption,
+////            const Eigen::ArrayXf &_scatter
+////    ) : Wall(_corners, _absorption, _scatter, "") {}
+//
+//    virtual float area() const;  // compute the area of the wall
+////    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+////            const Vectorf<D> &p1,
+////            const Vectorf<D> &p2,
+////            Eigen::Ref<Vectorf<D>> intersection
+////    ) const;
+//
+////    virtual int reflect(
+////            const Vectorf<D> &p,
+////            Eigen::Ref<Vectorf<D>> p_reflected
+////    ) const;
+////    virtual int side(const Vectorf<D> &p) const;
+////    virtual bool same_as(const Wall & that) const;
+////
+////    virtual Vectorf<D> normal_reflect(
+////            const Vectorf<D> &start,
+////            const Vectorf<D> &hit_point,
+////            float length) const;
+////
+////    virtual Vectorf<D> normal_reflect(const Vectorf<D> &incident) const;
+////
+////    virtual float cosine_angle(   // cosine angle with respect to surface normal
+////            const Vectorf<D> &p
+////    ) const;
+//
+//};
+//
+//class PolygonWithHole : public Polygon
+//{
+//
+//private:
+//    SimplePolygon outer_polygon;
+//    std::vector<SimplePolygon> inner_polygons;
+//
+//public:
+//    virtual float area() const;  // compute the area of the wall
+////    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+////            const Vectorf<D> &p1,
+////            const Vectorf<D> &p2,
+////            Eigen::Ref<Vectorf<D>> intersection
+////    ) const;
+//};
+
 template<size_t D>
 class Wall
 {
-  private:
+  protected:
     void init();  // common part of initialization for walls of any dimension
 
   public:
@@ -62,45 +185,41 @@ class Wall
     
     // Wall geometry properties
     Eigen::Matrix<float, D, 1>  normal;
-    Eigen::Matrix<float, D, Eigen::Dynamic> corners;
-
-    /* for 3D wall, provide local basis for plane of wall */
     Eigen::Matrix<float, D, 1> origin;
-    Eigen::Matrix<float, D, 2> basis;
-    Eigen::Matrix<float, 2, Eigen::Dynamic> flat_corners;
+    Eigen::Matrix<float, D, Eigen::Dynamic> corners;
 
     // Constructor
     Wall(
-        const Eigen::Matrix<float, D, Eigen::Dynamic> &_corners,
+        const Eigen::Matrix<float,D,Eigen::Dynamic> &_corners,
         const Eigen::ArrayXf &_absorption,
         const Eigen::ArrayXf &_scatter,
         const std::string &_name
         );
-    Wall(
-        const Eigen::Matrix<float, D, Eigen::Dynamic> &_corners,
-        const Eigen::ArrayXf &_absorption,
-        const Eigen::ArrayXf &_scatter
-        ) : Wall(_corners, _absorption, _scatter, "") {}
 
-    // Copy constructor
-    Wall(const Wall<D> &w) :
-      absorption(w.absorption), scatter(w.scatter), name(w.name),
-      transmission(w.transmission), energy_reflection(w.energy_reflection),
-      normal(w.normal), corners(w.corners),
-      origin(w.origin), basis(w.basis), flat_corners(w.flat_corners)
-    {}
+//    // Copy constructor
+//    Wall(const Wall<D> &w) :
+//      absorption(w.absorption), scatter(w.scatter), name(w.name),
+//      transmission(w.transmission), energy_reflection(w.energy_reflection),
+//      normal(w.normal), corners(w.corners),
+//      origin(w.origin), basis(w.basis), flat_corners(w.flat_corners)
+//    {}
 
     // public methods
+
+    // getters
     const Eigen::ArrayXf &get_transmission() const { return transmission; }
     const Eigen::ArrayXf &get_energy_reflection() const { return energy_reflection; }
     size_t get_n_bands() const { return transmission.size(); }
-    float area() const;  // compute the area of the wall
-    int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+
+    // methods specific to the concrete types of Wall<D>
+    virtual float area() const;  // compute the area of the wall
+    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
         const Vectorf<D> &p1,
         const Vectorf<D> &p2,
         Eigen::Ref<Vectorf<D>> intersection
         ) const;
 
+    // utility methods
     int intersects(
         const Vectorf<D> &p1,
         const Vectorf<D> &p2
@@ -125,29 +244,98 @@ class Wall
         ) const;
 };
 
-class WallWithHoles: public Wall<3>
+class Wall2D: public Wall<2>
 {
-  public:
-    // Wall geometry properties
-    Vector<Eigen::Matrix<float, 3, Eigen::Dynamic> *> hole_corners;
 
-    /*
-    // Constructor
-    WallWithHoles(
-            const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
-            const  Vector<Eigen::Matrix<float, 3, Eigen::Dynamic> *> &_hole_corners;
-            const Eigen::ArrayXf &_absorption,
-            const Eigen::ArrayXf &_scatter,
-            const std::string &_name
-    );
-    WallWithHoles(
-            const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
-            const  Vector<Eigen::Matrix<float, 3, Eigen::Dynamic> *> &_hole_corners;
-            const Eigen::ArrayXf &_absorption,
-            const Eigen::ArrayXf &_scatter
-    ) : WallWithHoles(_corners, _hole_corners, _absorption, _scatter, "") {}
-     */
+    public:
+
+
+        virtual float area() const;  // compute the area of the wall
+        virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+                const Vectorf<2> &p1,
+                const Vectorf<2> &p2,
+                Eigen::Ref<Vectorf<2>> intersection
+        ) const;
+
+        // Constructor
+        Wall2D(
+                const Eigen::Matrix<float, 2, Eigen::Dynamic> &_corners,
+                const Eigen::ArrayXf &_absorption,
+                const Eigen::ArrayXf &_scatter,
+                const std::string &_name
+        );
+        Wall2D(
+                const Eigen::Matrix<float, 2, Eigen::Dynamic> &_corners,
+                const Eigen::ArrayXf &_absorption,
+                const Eigen::ArrayXf &_scatter
+        ) : Wall2D(_corners, _absorption, _scatter, "") {}
+
 };
+
+class Wall3D: public Wall<3>
+{
+
+    public:
+
+        /* for 3D wall, provide local basis for plane of wall */
+        Eigen::Matrix<float, 3, 2> basis;
+        Eigen::Matrix<float, 2, Eigen::Dynamic> flat_corners;
+//        std::unique_ptr<Polygon> wall_geometry;
+
+        virtual float area() const;  // compute the area of the wall
+        virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+                const Vectorf<3> &p1,
+                const Vectorf<3> &p2,
+                Eigen::Ref<Vectorf<3>> intersection
+        ) const;
+
+        // Constructor
+        Wall3D(
+                const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+                const Eigen::ArrayXf &_absorption,
+                const Eigen::ArrayXf &_scatter,
+                const std::string &_name
+        );
+        Wall3D(
+                const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+                const Eigen::ArrayXf &_absorption,
+                const Eigen::ArrayXf &_scatter
+        ) : Wall3D(_corners, _absorption, _scatter, "") {}
+};
+
+
+//class WallWithHoles: public Wall<3>
+//{
+//
+//  public:
+//    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+//            const Vectorf<3> &p1,
+//            const Vectorf<3> &p2,
+//            Eigen::Ref<Vectorf<3>> intersection
+//    ) const;
+//
+//    // Wall geometry properties
+//    std::vector<Wall<3>> holes;
+//
+//
+//    // Constructor
+//    WallWithHoles(
+//            const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+//            const std::vector<Wall<3>> &_holes,
+//            const Eigen::ArrayXf &_absorption,
+//            const Eigen::ArrayXf &_scatter,
+//            const std::string &_name
+//    );
+//    WallWithHoles(
+//            const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+//            const std::vector<Wall<3>> &_holes,
+//            const Eigen::ArrayXf &_absorption,
+//            const Eigen::ArrayXf &_scatter
+//    ) : WallWithHoles(_corners, _holes, _absorption, _scatter, "") {}
+//
+//
+//};
+
 
 #include "wall.cpp"
 

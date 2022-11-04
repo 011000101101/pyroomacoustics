@@ -170,8 +170,60 @@ PYBIND11_MODULE(libroom, m) {
     .def_readonly("max_dist", &Room<2>::max_dist)
     ;
 
+//    // The Wall class
+//    py::class_<SimplePolygon> simple_polygon_cls(m, "SimplePolygon");
+//
+//    simple_polygon_cls
+////    .def(py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, const std::string &>(),
+////            py::arg("corners"), py::arg("absorption") = Eigen::ArrayXf::Zero(1),
+////    py::arg("scattering") = Eigen::ArrayXf::Zero(1), py::arg("name") = "")
+//    .def("area", &SimplePolygon::area)
+////    .def("intersection", &SimplePolygon::intersection)
+////    .def("intersects", &Wall<3>::intersects)
+////    .def("side", &Wall<3>::side)
+////    .def("reflect", &Wall<3>::reflect)
+////    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&, const Vectorf<3>&, float) const)&Wall<3>::normal_reflect)
+////    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&) const)&Wall<3>::normal_reflect)
+////    .def("same_as", &Wall<3>::same_as)
+////    .def_property_readonly_static("dim", [](py::object /* self */) { return 3; })
+////    .def_readwrite("absorption", &Wall<3>::absorption)
+////    .def_readwrite("scatter", &Wall<3>::scatter)
+////    .def_readwrite("name", &Wall<3>::name)
+////    .def_readonly("corners", &Wall<3>::corners)
+////    .def_readonly("origin", &Wall<3>::origin)
+////    .def_readonly("normal", &Wall<3>::normal)
+////    .def_readonly("basis", &Wall3D::basis)
+////    .def_readonly("flat_corners", &Wall3D::flat_corners)
+//    ;
+//
+//// The Wall class
+//py::class_<PolygonWithHole> polygon_with_hole_cls(m, "PolygonWithHole");
+//
+//polygon_with_hole_cls
+////    .def(py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, const std::string &>(),
+////            py::arg("corners"), py::arg("absorption") = Eigen::ArrayXf::Zero(1),
+////    py::arg("scattering") = Eigen::ArrayXf::Zero(1), py::arg("name") = "")
+//.def("area", &PolygonWithHole::area)
+////.def("intersection", &PolygonWithHole::intersection)
+////    .def("intersects", &Wall<3>::intersects)
+////    .def("side", &Wall<3>::side)
+////    .def("reflect", &Wall<3>::reflect)
+////    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&, const Vectorf<3>&, float) const)&Wall<3>::normal_reflect)
+////    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&) const)&Wall<3>::normal_reflect)
+////    .def("same_as", &Wall<3>::same_as)
+////    .def_property_readonly_static("dim", [](py::object /* self */) { return 3; })
+////    .def_readwrite("absorption", &Wall<3>::absorption)
+////    .def_readwrite("scatter", &Wall<3>::scatter)
+////    .def_readwrite("name", &Wall<3>::name)
+////    .def_readonly("corners", &Wall<3>::corners)
+////    .def_readonly("origin", &Wall<3>::origin)
+////    .def_readonly("normal", &Wall<3>::normal)
+////    .def_readonly("basis", &Wall3D::basis)
+////    .def_readonly("flat_corners", &Wall3D::flat_corners)
+//;
+
   // The Wall class
-  py::class_<Wall<3>> wall_cls(m, "Wall");
+  py::class_<Wall3D> wall_cls(m, "Wall");
 
   wall_cls
     .def(py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, const std::string &>(),
@@ -192,8 +244,8 @@ PYBIND11_MODULE(libroom, m) {
     .def_readonly("corners", &Wall<3>::corners)
     .def_readonly("origin", &Wall<3>::origin)
     .def_readonly("normal", &Wall<3>::normal)
-    .def_readonly("basis", &Wall<3>::basis)
-    .def_readonly("flat_corners", &Wall<3>::flat_corners)
+    .def_readonly("basis", &Wall3D::basis)
+    .def_readonly("flat_corners", &Wall3D::flat_corners)
     ;
 
   py::enum_<Wall<3>::Isect>(wall_cls, "Isect")
@@ -204,7 +256,7 @@ PYBIND11_MODULE(libroom, m) {
     .export_values();
 
   // The Wall class
-  py::class_<Wall<2>> wall2d_cls(m, "Wall2D");
+  py::class_<Wall2D> wall2d_cls(m, "Wall2D");
 
   wall2d_cls
     .def(py::init<const Eigen::Matrix<float,2,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, std::string &>(),
@@ -222,11 +274,11 @@ PYBIND11_MODULE(libroom, m) {
     .def_readwrite("absorption", &Wall<2>::absorption)
     .def_readwrite("scatter", &Wall<2>::scatter)
     .def_readwrite("name", &Wall<2>::name)
-    .def_readonly("corners", &Wall<2>::corners)
+    .def_readonly("corners", &Wall2D::corners)
     .def_readonly("origin", &Wall<2>::origin)
     .def_readonly("normal", &Wall<2>::normal)
-    .def_readonly("basis", &Wall<2>::basis)
-    .def_readonly("flat_corners", &Wall<2>::flat_corners)
+    //.def_readonly("basis", &Wall<2>::basis)
+    //.def_readonly("flat_corners", &Wall<2>::flat_corners)
     ;
 
   // The different wall intersection cases
