@@ -115,16 +115,16 @@ void Room<2>::make_shoebox_walls(
   corners.resize(2, 2);
 
   corners << 0.f, rs[0], 0.f, 0.f;
-  walls.push_back(Wall<2>(corners, abs.col(2), scat.col(2), "south"));
+  walls.push_back(Wall2D(corners, abs.col(2), scat.col(2), "south"));
 
   corners << rs[0], rs[0], 0.f, rs[1];
-  walls.push_back(Wall<2>(corners, abs.col(1), scat.col(1), "east"));
+  walls.push_back(Wall2D(corners, abs.col(1), scat.col(1), "east"));
 
   corners << rs[0], 0.f, rs[1], rs[1];
-  walls.push_back(Wall<2>(corners, abs.col(3), scat.col(3), "north"));
+  walls.push_back(Wall2D(corners, abs.col(3), scat.col(3), "north"));
 
   corners << 0.f, 0.f, rs[1], 0.f;
-  walls.push_back(Wall<2>(corners, abs.col(0), scat.col(0), "west"));
+  walls.push_back(Wall2D(corners, abs.col(0), scat.col(0), "west"));
 }
 
 
@@ -141,32 +141,32 @@ void Room<3>::make_shoebox_walls(
   corners << 0.f, 0.f, 0.f, 0.f,
              rs[1], 0.f, 0.f, rs[1],
              0.f, 0.f, rs[2], rs[2];
-  walls.push_back(Wall<3>(corners, abs.col(0), scat.col(0), "west"));
+  walls.push_back(Wall3D(corners, abs.col(0), scat.col(0), "west"));
 
   corners << rs[0], rs[0], rs[0], rs[0], 
              0.f, rs[1], rs[1], 0.f, 
              0.f, 0.f, rs[2], rs[2];
-  walls.push_back(Wall<3>(corners, abs.col(1), scat.col(1), "east"));
+  walls.push_back(Wall3D(corners, abs.col(1), scat.col(1), "east"));
 
   corners << 0.f, rs[0], rs[0], 0.f,
              0.f, 0.f, 0.f, 0.f, 
              0.f, 0.f, rs[2], rs[2];
-  walls.push_back(Wall<3>(corners, abs.col(2), scat.col(2), "south"));
+  walls.push_back(Wall3D(corners, abs.col(2), scat.col(2), "south"));
 
   corners << rs[0], 0.f, 0.f, rs[0],
              rs[1], rs[1], rs[1], rs[1],
              0.f, 0.f, rs[2], rs[2];
-  walls.push_back(Wall<3>(corners, abs.col(3), scat.col(3), "north"));
+  walls.push_back(Wall3D(corners, abs.col(3), scat.col(3), "north"));
 
   corners << rs[0], 0.f, 0.f, rs[0],
              0.f, 0.f, rs[1], rs[1],
              0.f, 0.f, 0.f, 0.f;
-  walls.push_back(Wall<3>(corners, abs.col(4), scat.col(4), "floor"));
+  walls.push_back(Wall3D(corners, abs.col(4), scat.col(4), "floor"));
 
   corners << rs[0], rs[0], 0.f, 0.f,
              0.f, rs[1], rs[1], 0.f,
              rs[2], rs[2], rs[2], rs[2];
-  walls.push_back(Wall<3>(corners, abs.col(5), scat.col(5), "ceiling"));
+  walls.push_back(Wall3D(corners, abs.col(5), scat.col(5), "ceiling"));
 }
 
 
