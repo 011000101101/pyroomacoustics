@@ -59,22 +59,12 @@ Polygon::Polygon() {
 
 SimplePolygon::SimplePolygon(
         const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners, const Eigen::Matrix<float, 3, 1> &_origin
-) : origin(_origin) {
+) : corners(_corners), origin(_origin) {
     // In 3D things are a little more complicated
     // We need to compute a 2D basis for the plane and find the normal
 
-    std::cout << "Hello World\n";
-    std::cout << _corners;
-    std::cout << "\n";
-    std::cout << origin;
-    std::cout << "\n";
-    std::cout << (corners.colwise() - origin);
-    std::cout << "\n";
-
     // The basis and normal are found by SVD
     Eigen::JacobiSVD<Eigen::Matrix<float,3,Eigen::Dynamic>> svd(corners.colwise() - origin, Eigen::ComputeThinU);
-
-    std::cout << "FLAG 1\n";
 
     // The corners matrix should be rank defficient, check the smallest eigen value
     // The rank deficiency is because all the corners are in a 2D subspace of 3D space
@@ -83,30 +73,20 @@ SimplePolygon::SimplePolygon(
         throw std::runtime_error("The corners of the polygon do not lie in a plane");
     }
 
-    std::cout << "FLAG 2\n";
-
     // The basis is the leading two left singular vectors
     basis.col(0) = svd.matrixU().col(0);
     basis.col(1) = svd.matrixU().col(1);
 
-    std::cout << "FLAG 3\n";
-
     // The normal corresponds to the smallest singular value
     normal = svd.matrixU().col(2);
 
-    std::cout << "FLAG 4\n";
-
     // Project the 3d corners into 2d plane
     flat_corners = basis.adjoint() * (corners.colwise() - origin);
-
-    std::cout << "FLAG 5\n";
 
     // Our convention is that the vertices are arranged counter-clockwise
     // around the normal. In that case, the area computation should be positive.
     // If it is negative, we need to swap the basis.
     float a = area();
-
-    std::cout << "FLAG 6\n";
 
     if (a < 0)
     {
@@ -115,12 +95,8 @@ SimplePolygon::SimplePolygon(
         flat_corners.colwise().reverseInPlace();
     }
 
-    std::cout << "FLAG 7\n";
-
     // Now the normal is computed as the cross product of the two basis vectors
     normal = cross(basis.col(0), basis.col(1));
-
-    std::cout << "FLAG 8\n";
 }
 
 PolygonWithHole::PolygonWithHole(
