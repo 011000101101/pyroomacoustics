@@ -56,26 +56,11 @@ class Polygon
                 std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> holes
         );
 
-        // Wall geometry properties
-        Eigen::Matrix<float, 3, 1>  normal;
-        Eigen::Matrix<float, 3, Eigen::Dynamic> corners;
-
-        /* for 3D wall, provide local basis for plane of wall */
-        Eigen::Matrix<float, 3, 1> origin;
-        Eigen::Matrix<float, 3, 2> basis;
-        Eigen::Matrix<float, 2, Eigen::Dynamic> flat_corners;
-
         // Constructor
-        Polygon(
-                const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners
-        );
-//        Wall(
-//                const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
-//                const Eigen::ArrayXf &_absorption,
-//                const Eigen::ArrayXf &_scatter
-//        ) : Wall(_corners, _absorption, _scatter, "") {}
+        Polygon();
 
         virtual float area() const = 0;  // compute the area of the wall
+        virtual Eigen::Matrix<float, 3, 1> get_origin() = 0;
 //        virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
 //                const Vectorf<3> &p1,
 //                const Vectorf<3> &p2,
@@ -105,6 +90,15 @@ class SimplePolygon : public Polygon
 {
 private:
 
+    // Wall geometry properties
+    Eigen::Matrix<float, 3, 1>  normal;
+    Eigen::Matrix<float, 3, Eigen::Dynamic> corners;
+
+    /* for 3D wall, provide local basis for plane of wall */
+    Eigen::Matrix<float, 3, 1> origin;
+    Eigen::Matrix<float, 3, 2> basis;
+    Eigen::Matrix<float, 2, Eigen::Dynamic> flat_corners;
+
 public:
 
     // Constructor
@@ -121,6 +115,7 @@ public:
 //    ) : Wall(_corners, _absorption, _scatter, "") {}
 
     virtual float area() const;  // compute the area of the wall
+    virtual Eigen::Matrix<float, 3, 1> get_origin();
 //    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
 //            const Vectorf<D> &p1,
 //            const Vectorf<D> &p2,
@@ -146,8 +141,14 @@ public:
 //    ) const;
 
     SimplePolygon(
-            Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners
+            Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+            Eigen::Matrix<float, 3, 1> &_origin
     );
+
+    // _corners.col(0) is guaranteed to be the correct type by the type constraint of _corners
+    SimplePolygon(
+            Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners
+    ) : SimplePolygon(_corners, (Eigen::Matrix<float, 3, 1>) _corners.col(0)) {}
 
 };
 
@@ -160,6 +161,7 @@ private:
 
 public:
     virtual float area() const;  // compute the area of the wall
+    virtual Eigen::Matrix<float, 3, 1> get_origin();
 //    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
 //            const Vectorf<D> &p1,
 //            const Vectorf<D> &p2,
