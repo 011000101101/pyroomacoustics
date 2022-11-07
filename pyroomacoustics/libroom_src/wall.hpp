@@ -50,11 +50,12 @@ class Polygon
 
     public:
 
-        //factory method
+        //factory methods
         static Polygon *make_polygon(
                 Eigen::Matrix<float, 3, Eigen::Dynamic> corners,
                 std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> holes
         );
+        static Polygon *make_polygon(const Polygon &p);  // for copying
 
         //getters
         virtual Eigen::Matrix<float, 3, 1> get_normal() const = 0;
@@ -108,11 +109,11 @@ private:
 public:
 
     //getters
-    virtual Eigen::Matrix<float, 3, 1> get_normal() const;
-    virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const;
-    virtual Eigen::Matrix<float, 3, 1> get_origin() const;
-    virtual Eigen::Matrix<float, 3, 2> get_basis() const;
-    virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const;
+    virtual Eigen::Matrix<float, 3, 1> get_normal() const{return normal;}
+    virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const{return corners;}
+    virtual Eigen::Matrix<float, 3, 1> get_origin() const{return origin;}
+    virtual Eigen::Matrix<float, 3, 2> get_basis() const{return basis;}
+    virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const{return flat_corners;}
 
     virtual float area() const;  // compute the area of the wall
     virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
@@ -140,14 +141,20 @@ public:
 //    ) const;
 
     SimplePolygon(
-            Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
-            Eigen::Matrix<float, 3, 1> &_origin
+            const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+            const Eigen::Matrix<float, 3, 1> &_origin
     );
 
     // _corners.col(0) is guaranteed to be the correct type by the type constraint of _corners
     SimplePolygon(
-            Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners
+            const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners
     ) : SimplePolygon(_corners, (Eigen::Matrix<float, 3, 1>) _corners.col(0)) {}
+
+    //copy constructor
+    SimplePolygon(const SimplePolygon &p) :
+        normal(p.get_normal()), corners(p.get_corners()), origin(p.get_origin()), basis(p.get_basis()),
+        flat_corners(p.get_flat_corners())
+    {}
 
 };
 
@@ -161,11 +168,14 @@ private:
 public:
 
     //getters
-    virtual Eigen::Matrix<float, 3, 1> get_normal() const;
-    virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const;
-    virtual Eigen::Matrix<float, 3, 1> get_origin() const;
-    virtual Eigen::Matrix<float, 3, 2> get_basis() const;
-    virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const;
+    virtual Eigen::Matrix<float, 3, 1> get_normal() const{return outer_polygon.get_normal();}
+    virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const{return outer_polygon.get_corners();}
+    virtual Eigen::Matrix<float, 3, 1> get_origin() const{return outer_polygon.get_origin();}
+    virtual Eigen::Matrix<float, 3, 2> get_basis() const{return outer_polygon.get_basis();}
+    virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const{return outer_polygon.get_flat_corners();}
+
+    SimplePolygon get_outer_polygon() const {return outer_polygon;}
+    std::vector<SimplePolygon> get_inner_polygons() const {return inner_polygons;}
 
     virtual float area() const;  // compute the area of the wall
     virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
@@ -175,9 +185,12 @@ public:
     ) const;
 
     PolygonWithHole(
-            Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
-            std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> &_holes
+            const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
+            const std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> &_holes
     );
+
+    //copy constructor
+    PolygonWithHole(const PolygonWithHole &p);
 };
 
 template<size_t D>
@@ -289,6 +302,9 @@ class Wall2D: public Wall<2>
                 const Eigen::ArrayXf &_absorption,
                 const Eigen::ArrayXf &_scatter
         ) : Wall2D(_corners, _absorption, _scatter, "") {}
+        Wall2D(const Wall2D &w) :
+          Wall2D(w.corners, w.absorption, w.scatter, w.name)
+        {}
 
 };
 
@@ -345,6 +361,15 @@ class Wall3D: public Wall<3>
                 _absorption,
                 _scatter,
                 ""){}
+        // copy constructor
+        Wall3D(const Wall3D &w) :
+                Wall<3>(w.corners, w.absorption, w.scatter, w.name),
+                basis(w.basis), flat_corners(w.flat_corners),
+                wall_geometry(Polygon::make_polygon(*(w.wall_geometry)))
+        {
+            origin = w.wall_geometry->get_origin();
+            normal = w.wall_geometry->get_normal();
+        }
 
         ~Wall3D()
         {
