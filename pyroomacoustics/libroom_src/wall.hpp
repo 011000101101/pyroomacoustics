@@ -56,11 +56,17 @@ class Polygon
                 std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> holes
         );
 
+        //getters
+        virtual Eigen::Matrix<float, 3, 1> get_normal() const = 0;
+        virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const = 0;
+        virtual Eigen::Matrix<float, 3, 1> get_origin() const = 0;
+        virtual Eigen::Matrix<float, 3, 2> get_basis() const = 0;
+        virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const = 0;
+
         // Constructor
         Polygon();
 
         virtual float area() const = 0;  // compute the area of the wall
-        virtual Eigen::Matrix<float, 3, 1> get_origin() const = 0;
         virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
                 const Vectorf<3> &p1,
                 const Vectorf<3> &p2,
@@ -101,21 +107,14 @@ private:
 
 public:
 
-    // Constructor
-//    SimplePolygon(
-//            const Eigen::Matrix<float, D, Eigen::Dynamic> &_corners,
-//            const Eigen::ArrayXf &_absorption,
-//            const Eigen::ArrayXf &_scatter,
-//            const std::string &_name
-//    );
-//    Wall(
-//            const Eigen::Matrix<float, D, Eigen::Dynamic> &_corners,
-//            const Eigen::ArrayXf &_absorption,
-//            const Eigen::ArrayXf &_scatter
-//    ) : Wall(_corners, _absorption, _scatter, "") {}
+    //getters
+    virtual Eigen::Matrix<float, 3, 1> get_normal() const;
+    virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const;
+    virtual Eigen::Matrix<float, 3, 1> get_origin() const;
+    virtual Eigen::Matrix<float, 3, 2> get_basis() const;
+    virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const;
 
     virtual float area() const;  // compute the area of the wall
-    virtual Eigen::Matrix<float, 3, 1> get_origin() const;
     virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
             const Vectorf<3> &p1,
             const Vectorf<3> &p2,
@@ -160,8 +159,15 @@ private:
     std::vector<SimplePolygon> inner_polygons;
 
 public:
-    virtual float area() const;  // compute the area of the wall
+
+    //getters
+    virtual Eigen::Matrix<float, 3, 1> get_normal() const;
+    virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const;
     virtual Eigen::Matrix<float, 3, 1> get_origin() const;
+    virtual Eigen::Matrix<float, 3, 2> get_basis() const;
+    virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const;
+
+    virtual float area() const;  // compute the area of the wall
     virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
             const Vectorf<3> &p1,
             const Vectorf<3> &p2,

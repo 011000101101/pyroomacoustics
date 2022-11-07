@@ -94,12 +94,44 @@ PolygonWithHole::PolygonWithHole(
 
 }
 
+Eigen::Matrix<float, 3, 1> SimplePolygon::get_normal() const{
+    return normal;
+}
+
+Eigen::Matrix<float, 3, 1> PolygonWithHole::get_normal() const{
+    return outer_polygon.get_normal();
+}
+
+Eigen::Matrix<float, 3, Eigen::Dynamic> SimplePolygon::get_corners() const{
+    return corners;
+}
+
+Eigen::Matrix<float, 3, Eigen::Dynamic> PolygonWithHole::get_corners() const{
+    return outer_polygon.get_corners();
+}
+
 Eigen::Matrix<float, 3, 1> SimplePolygon::get_origin() const{
     return origin;
 }
 
 Eigen::Matrix<float, 3, 1> PolygonWithHole::get_origin() const{
     return outer_polygon.get_origin();
+}
+
+Eigen::Matrix<float, 3, 2> SimplePolygon::get_basis() const{
+    return basis;
+}
+
+Eigen::Matrix<float, 3, 2> PolygonWithHole::get_basis() const{
+    return outer_polygon.get_basis();
+}
+
+Eigen::Matrix<float, 2, Eigen::Dynamic> SimplePolygon::get_flat_corners() const{
+    return flat_corners;
+}
+
+Eigen::Matrix<float, 2, Eigen::Dynamic> PolygonWithHole::get_flat_corners() const{
+    return outer_polygon.get_flat_corners();
 }
 
 float Wall2D::area() const
@@ -278,28 +310,14 @@ Wall3D::Wall3D(
     )
   : Wall<3>(_corners, _absorption, _scatter, _name), wall_geometry(Polygon::make_polygon(_corners, _holes))
 {
-  init();
+    init();
 
-  // In 3D things are a little more complicated
-  // We need to compute a 2D basis for the plane and find the normal
-
-//  // Pick the origin as the first corner
-//  origin = corners.col(0);
+    // Pick the origin as the first corner of the outer polygon
     origin = wall_geometry->get_origin();
-//
-//  // The basis and normal are found by SVD
-//  Eigen::JacobiSVD<Eigen::Matrix<float,3,Eigen::Dynamic>> svd(corners.colwise() - origin, Eigen::ComputeThinU);
-//
-//  // The corners matrix should be rank defficient, check the smallest eigen value
-//  // The rank deficiency is because all the corners are in a 2D subspace of 3D space
-//  if (svd.singularValues().coeff(2) > libroom_eps)
-//  {
-//    throw std::runtime_error("The corners of the wall do not lie in a plane");
-//  }
-//
-//  // The basis is the leading two left singular vectors
-//  basis.col(0) = svd.matrixU().col(0);
-//  basis.col(1) = svd.matrixU().col(1);
+
+    // TODO assert inners are coplanar with and within outer
+
+    basis = wall_geometry->get_basis();
 //
 //  // The normal corresponds to the smallest singular value
 //  normal = svd.matrixU().col(2);
@@ -321,42 +339,6 @@ Wall3D::Wall3D(
 //  // Now the normal is computed as the cross product of the two basis vectors
 //  normal = cross(basis.col(0), basis.col(1));
 }
-
-////template<>
-//Wall::Wall(
-//        const Eigen::Matrix<float,2,Eigen::Dynamic> &_corners,
-//        const Eigen::ArrayXf &_absorption,
-//        const Eigen::ArrayXf &_scatter,
-//        const std::string &_name
-//)
-//        : Wall<2>(_corners, _absorption, _scatter, _name)
-//{
-//}
-//
-////template<>
-//Wall3D::Wall3D(
-//        const Eigen::Matrix<float,3,Eigen::Dynamic> &_corners,
-//        const Eigen::ArrayXf &_absorption,
-//        const Eigen::ArrayXf &_scatter,
-//        const std::string &_name
-//)
-//        : Wall<3>(_corners, _absorption, _scatter, _name)
-//{
-//    // TODO: assert holes are coplanar to and within wall
-//}
-
-////template<>
-//WallWithHoles::WallWithHoles(
-//        const Eigen::Matrix<float,3,Eigen::Dynamic> &_corners,
-//        const std::vector<Wall<3>> &_holes,
-//        const Eigen::ArrayXf &_absorption,
-//        const Eigen::ArrayXf &_scatter,
-//        const std::string &_name
-//)
-//        : Wall<3>(_corners, _absorption, _scatter, _name), holes(_holes)
-//{
-//            // TODO: assert holes are coplanar to and within wall
-//}
 
 template<size_t D>
 int Wall<D>::intersection(
@@ -409,8 +391,7 @@ int Wall3D::intersection(
             3 if both the above are true
     */
 
-//  return wall_geometry.intersection(p1, p2, intersection);  // no intersection
-    return -1;
+  return wall_geometry->intersection(p1, p2, intersection);
 }
 
 template<size_t D>
