@@ -60,12 +60,12 @@ class Polygon
         Polygon();
 
         virtual float area() const = 0;  // compute the area of the wall
-        virtual Eigen::Matrix<float, 3, 1> get_origin() = 0;
-//        virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
-//                const Vectorf<3> &p1,
-//                const Vectorf<3> &p2,
-//                Eigen::Ref<Vectorf<3>> intersection
-//        ) const;
+        virtual Eigen::Matrix<float, 3, 1> get_origin() const = 0;
+        virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+                const Vectorf<3> &p1,
+                const Vectorf<3> &p2,
+                Eigen::Ref<Vectorf<3>> intersection
+        ) const = 0;
 
 //        virtual int reflect(
 //                const Vectorf<3> &p,
@@ -115,12 +115,12 @@ public:
 //    ) : Wall(_corners, _absorption, _scatter, "") {}
 
     virtual float area() const;  // compute the area of the wall
-    virtual Eigen::Matrix<float, 3, 1> get_origin();
-//    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
-//            const Vectorf<D> &p1,
-//            const Vectorf<D> &p2,
-//            Eigen::Ref<Vectorf<D>> intersection
-//    ) const;
+    virtual Eigen::Matrix<float, 3, 1> get_origin() const;
+    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+            const Vectorf<3> &p1,
+            const Vectorf<3> &p2,
+            Eigen::Ref<Vectorf<3>> intersection
+    ) const;
 
 //    virtual int reflect(
 //            const Vectorf<D> &p,
@@ -161,12 +161,12 @@ private:
 
 public:
     virtual float area() const;  // compute the area of the wall
-    virtual Eigen::Matrix<float, 3, 1> get_origin();
-//    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
-//            const Vectorf<D> &p1,
-//            const Vectorf<D> &p2,
-//            Eigen::Ref<Vectorf<D>> intersection
-//    ) const;
+    virtual Eigen::Matrix<float, 3, 1> get_origin() const;
+    virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
+            const Vectorf<3> &p1,
+            const Vectorf<3> &p2,
+            Eigen::Ref<Vectorf<3>> intersection
+    ) const;
 
     PolygonWithHole(
             Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
