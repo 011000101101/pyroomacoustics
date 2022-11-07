@@ -43,7 +43,7 @@ Polygon *Polygon::make_polygon(
     }
 }
 
-Polygon::Polygon(const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners) {
+Polygon::Polygon() {
 
     // In 3D things are a little more complicated
     // We need to compute a 2D basis for the plane and find the normal
@@ -86,15 +86,66 @@ Polygon::Polygon(const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners) {
 //    normal = cross(basis.col(0), basis.col(1));
 }
 
-SimplePolygon::SimplePolygon(Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners) : Polygon(_corners) {
-
+SimplePolygon::SimplePolygon(
+        Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners, Eigen::Matrix<float, 3, 1> &_origin
+) {
+//
+//
+//    // In 3D things are a little more complicated
+//    // We need to compute a 2D basis for the plane and find the normal
+//
+//    //  // Pick the origin as the first corner
+//    //  origin = corners.col(0);
+//        origin = wall_geometry.origin;
+//    //
+//    //  // The basis and normal are found by SVD
+//    //  Eigen::JacobiSVD<Eigen::Matrix<float,3,Eigen::Dynamic>> svd(corners.colwise() - origin, Eigen::ComputeThinU);
+//    //
+//    //  // The corners matrix should be rank defficient, check the smallest eigen value
+//    //  // The rank deficiency is because all the corners are in a 2D subspace of 3D space
+//    //  if (svd.singularValues().coeff(2) > libroom_eps)
+//    //  {
+//    //    throw std::runtime_error("The corners of the wall do not lie in a plane");
+//    //  }
+//    //
+//    //  // The basis is the leading two left singular vectors
+//    //  basis.col(0) = svd.matrixU().col(0);
+//    //  basis.col(1) = svd.matrixU().col(1);
+//    //
+//    //  // The normal corresponds to the smallest singular value
+//    //  normal = svd.matrixU().col(2);
+//    //
+//    //  // Project the 3d corners into 2d plane
+//    //  flat_corners = basis.adjoint() * (corners.colwise() - origin);
+//    //
+//    //  // Our convention is that the vertices are arranged counter-clockwise
+//    //  // around the normal. In that case, the area computation should be positive.
+//    //  // If it is positive, we need to swap the basis.
+//    //  float a = area();
+//    //  if (a < 0)
+//    //  {
+//    //    // exchange the other two basis vectors
+//    //    basis.rowwise().reverseInPlace();
+//    //    flat_corners.colwise().reverseInPlace();
+//    //  }
+//    //
+//    //  // Now the normal is computed as the cross product of the two basis vectors
+//    //  normal = cross(basis.col(0), basis.col(1));
 }
 
 PolygonWithHole::PolygonWithHole(
         Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
         std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> &_holes
-) : Polygon(_corners), outer_polygon(SimplePolygon(_corners)) {
+) : outer_polygon(SimplePolygon(_corners)) {
 
+}
+
+Eigen::Matrix<float, 3, 1> SimplePolygon::get_origin(){
+    return origin;
+}
+
+Eigen::Matrix<float, 3, 1> PolygonWithHole::get_origin(){
+    return outer_polygon.get_origin();
 }
 
 float Wall2D::area() const
@@ -104,24 +155,21 @@ float Wall2D::area() const
 
 float SimplePolygon::area() const
 {
-//    return area_2d_polygon(flat_corners);
-    return 0.;
+    return area_2d_polygon(flat_corners);
 }
 
 float PolygonWithHole::area() const
 {
-//    float inner_areas = 0.;
-//    for (unsigned i=0; i < inner_polygons.size(); i++) {
-//        inner_areas += inner_polygons[i].area();
-//    }
-//    return outer_polygon.area() - inner_areas;
-    return 0.;
+    float inner_areas = 0.;
+    for (unsigned i=0; i < inner_polygons.size(); i++) {
+        inner_areas += inner_polygons[i].area();
+    }
+    return outer_polygon.area() - inner_areas;
 }
 
 float Wall3D::area() const
 {
-    return 0.;
-//  return wall_geometry->area();
+    return wall_geometry->area();
 }
 
 template<size_t D>
@@ -192,6 +240,7 @@ Wall3D::Wall3D(
 
 //  // Pick the origin as the first corner
 //  origin = corners.col(0);
+    origin = wall_geometry->get_origin();
 //
 //  // The basis and normal are found by SVD
 //  Eigen::JacobiSVD<Eigen::Matrix<float,3,Eigen::Dynamic>> svd(corners.colwise() - origin, Eigen::ComputeThinU);
