@@ -44,93 +44,47 @@ Polygon *Polygon::make_polygon(
 }
 
 Polygon::Polygon() {
-
-    // In 3D things are a little more complicated
-    // We need to compute a 2D basis for the plane and find the normal
-
-    // Pick the origin as the first corner
-//    origin = corners.col(0);
-//
-//    // The basis and normal are found by SVD
-//    Eigen::JacobiSVD<Eigen::Matrix<float,3,Eigen::Dynamic>> svd(corners.colwise() - origin, Eigen::ComputeThinU);
-//
-//    // The corners matrix should be rank defficient, check the smallest eigen value
-//    // The rank deficiency is because all the corners are in a 2D subspace of 3D space
-//    if (svd.singularValues().coeff(2) > libroom_eps)
-//    {
-//    throw std::runtime_error("The corners of the wall do not lie in a plane");
-//    }
-//
-//    // The basis is the leading two left singular vectors
-//    basis.col(0) = svd.matrixU().col(0);
-//    basis.col(1) = svd.matrixU().col(1);
-//
-//    // The normal corresponds to the smallest singular value
-//    normal = svd.matrixU().col(2);
-//
-//    // Project the 3d corners into 2d plane
-//    flat_corners = basis.adjoint() * (corners.colwise() - origin);
-//
-//    // Our convention is that the vertices are arranged counter-clockwise
-//    // around the normal. In that case, the area computation should be positive.
-//    // If it is positive, we need to swap the basis.
-//    float a = area();
-//    if (a < 0)
-//    {
-//    // exchange the other two basis vectors
-//    basis.rowwise().reverseInPlace();
-//    flat_corners.colwise().reverseInPlace();
-//    }
-//
-//    // Now the normal is computed as the cross product of the two basis vectors
-//    normal = cross(basis.col(0), basis.col(1));
 }
 
 SimplePolygon::SimplePolygon(
         Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners, Eigen::Matrix<float, 3, 1> &_origin
-) {
-//
-//
-//    // In 3D things are a little more complicated
-//    // We need to compute a 2D basis for the plane and find the normal
-//
-//    //  // Pick the origin as the first corner
-//    //  origin = corners.col(0);
-//        origin = wall_geometry.origin;
-//    //
-//    //  // The basis and normal are found by SVD
-//    //  Eigen::JacobiSVD<Eigen::Matrix<float,3,Eigen::Dynamic>> svd(corners.colwise() - origin, Eigen::ComputeThinU);
-//    //
-//    //  // The corners matrix should be rank defficient, check the smallest eigen value
-//    //  // The rank deficiency is because all the corners are in a 2D subspace of 3D space
-//    //  if (svd.singularValues().coeff(2) > libroom_eps)
-//    //  {
-//    //    throw std::runtime_error("The corners of the wall do not lie in a plane");
-//    //  }
-//    //
-//    //  // The basis is the leading two left singular vectors
-//    //  basis.col(0) = svd.matrixU().col(0);
-//    //  basis.col(1) = svd.matrixU().col(1);
-//    //
-//    //  // The normal corresponds to the smallest singular value
-//    //  normal = svd.matrixU().col(2);
-//    //
-//    //  // Project the 3d corners into 2d plane
-//    //  flat_corners = basis.adjoint() * (corners.colwise() - origin);
-//    //
-//    //  // Our convention is that the vertices are arranged counter-clockwise
-//    //  // around the normal. In that case, the area computation should be positive.
-//    //  // If it is positive, we need to swap the basis.
-//    //  float a = area();
-//    //  if (a < 0)
-//    //  {
-//    //    // exchange the other two basis vectors
-//    //    basis.rowwise().reverseInPlace();
-//    //    flat_corners.colwise().reverseInPlace();
-//    //  }
-//    //
-//    //  // Now the normal is computed as the cross product of the two basis vectors
-//    //  normal = cross(basis.col(0), basis.col(1));
+) : origin(_origin) {
+    // In 3D things are a little more complicated
+    // We need to compute a 2D basis for the plane and find the normal
+
+    // The basis and normal are found by SVD
+    Eigen::JacobiSVD<Eigen::Matrix<float,3,Eigen::Dynamic>> svd(corners.colwise() - origin, Eigen::ComputeThinU);
+
+    // The corners matrix should be rank defficient, check the smallest eigen value
+    // The rank deficiency is because all the corners are in a 2D subspace of 3D space
+    if (svd.singularValues().coeff(2) > libroom_eps)
+    {
+        throw std::runtime_error("The corners of the polygon do not lie in a plane");
+    }
+
+    // The basis is the leading two left singular vectors
+    basis.col(0) = svd.matrixU().col(0);
+    basis.col(1) = svd.matrixU().col(1);
+
+    // The normal corresponds to the smallest singular value
+    normal = svd.matrixU().col(2);
+
+    // Project the 3d corners into 2d plane
+    flat_corners = basis.adjoint() * (corners.colwise() - origin);
+
+    // Our convention is that the vertices are arranged counter-clockwise
+    // around the normal. In that case, the area computation should be positive.
+    // If it is negative, we need to swap the basis.
+    float a = area();
+    if (a < 0)
+    {
+        // exchange the other two basis vectors
+        basis.rowwise().reverseInPlace();
+        flat_corners.colwise().reverseInPlace();
+    }
+
+    // Now the normal is computed as the cross product of the two basis vectors
+    normal = cross(basis.col(0), basis.col(1));
 }
 
 PolygonWithHole::PolygonWithHole(
@@ -140,11 +94,11 @@ PolygonWithHole::PolygonWithHole(
 
 }
 
-Eigen::Matrix<float, 3, 1> SimplePolygon::get_origin(){
+Eigen::Matrix<float, 3, 1> SimplePolygon::get_origin() const{
     return origin;
 }
 
-Eigen::Matrix<float, 3, 1> PolygonWithHole::get_origin(){
+Eigen::Matrix<float, 3, 1> PolygonWithHole::get_origin() const{
     return outer_polygon.get_origin();
 }
 
@@ -165,6 +119,97 @@ float PolygonWithHole::area() const
         inner_areas += inner_polygons[i].area();
     }
     return outer_polygon.area() - inner_areas;
+}
+
+int SimplePolygon::intersection(
+        const Eigen::Matrix<float,3,1> &p1,
+        const Eigen::Matrix<float,3,1> &p2,
+        Eigen::Ref<Eigen::Matrix<float,3,1>> intersection
+) const
+{
+    /*
+      Computes the intersection between a line segment and a polygon surface in 3D.
+      This function computes the intersection between a line segment (defined
+      by the coordinates of two points) and a surface (defined by an array of
+      coordinates of corners of the polygon and a normal vector)
+      If there is no intersection, None is returned.
+      If the segment belongs to the surface, None is returned.
+      Two booleans are also returned to indicate if the intersection
+      happened at extremities of the segment or at a border of the polygon,
+      which can be useful for limit cases computations.
+
+      a1: (array size 3) coordinates of the first endpoint of the segment
+      a2: (array size 3) coordinates of the second endpoint of the segment
+      corners: (array size 3xN, N>2) coordinates of the corners of the polygon
+      normal: (array size 3) normal vector of the surface
+      intersection: (array size 3) store the intersection point
+
+      :returns:
+             -1 if there is no intersection
+              0 if the intersection striclty between the segment endpoints and in the polygon interior
+              1 if the intersection is at endpoint of segment
+              2 if the intersection is at boundary of polygon
+              3 if both the above are true
+      */
+
+    int ret1, ret2, ret = 0;
+
+    ret1 = intersection_3d_segment_plane(p1, p2, origin, normal, intersection);
+
+    if (ret1 == -1)
+        return -1;  // there is no intersection
+
+    if (ret1 == 1)  // intersection at endpoint of segment
+        ret = 1;
+
+    /* project intersection into plane basis */
+    Eigen::Vector2f flat_intersection = basis.adjoint() * (intersection - origin);
+
+    /* check in flatland if intersection is in the polygon */
+    ret2 = is_inside_2d_polygon(flat_intersection, flat_corners);
+
+    if (ret2 < 0)  // intersection is outside of the wall
+        return -1;
+
+    if (ret2 == 1) // intersection is on the boundary of the wall
+        ret |= 2;
+
+    return ret;  // no intersection
+}
+
+int PolygonWithHole::intersection(
+        const Eigen::Matrix<float,3,1> &p1,
+        const Eigen::Matrix<float,3,1> &p2,
+        Eigen::Ref<Eigen::Matrix<float,3,1>> intersection
+) const
+{
+    int ret1 = outer_polygon.intersection(p1, p2, intersection);
+    // if there is no intersection with the outer polygon, there can be no intersection overall
+    if (ret1 == -1) {
+        return ret1;
+    }
+    // if the intersection lies on the boundary of the outer polygon, it is not affected by inner polygons, as we do
+    // not allow holes to coincide with the outer boundary
+    else if (ret1 >= 2) {
+        return ret1;
+    }
+    else {
+        // check intersection with each of the holes
+        for (unsigned i=0; i < inner_polygons.size(); i++) {
+            int ret2 = inner_polygons[i].intersection(p1, p2, intersection);
+            // if the intersection falls within one hole, it does not intersect the total polygon and we can return
+            if (ret2 == 0 || ret2 == 1) {
+                return -1;
+            }
+            // the boundary of holes is treated like the boundary of the total polygon
+            else if (ret2 >= 2) {
+                return ret2;
+            }
+            // else continue with the next hole
+        }
+        // if no intersection with any hole, return the original intersection value with the outer polygon
+        return ret1;
+    }
 }
 
 float Wall3D::area() const
@@ -331,63 +376,6 @@ int Wall2D::intersection(
 {
   return intersection_2d_segments(p1, p2, corners.col(0), corners.col(1), intersection);
 }
-
-////template<>
-//int SimplePolygon::intersection(
-//        const Eigen::Matrix<float,3,1> &p1,
-//        const Eigen::Matrix<float,3,1> &p2,
-//        Eigen::Ref<Eigen::Matrix<float,3,1>> intersection
-//) const
-//{
-//    /*
-//      Computes the intersection between a line segment and a polygon surface in 3D.
-//      This function computes the intersection between a line segment (defined
-//      by the coordinates of two points) and a surface (defined by an array of
-//      coordinates of corners of the polygon and a normal vector)
-//      If there is no intersection, None is returned.
-//      If the segment belongs to the surface, None is returned.
-//      Two booleans are also returned to indicate if the intersection
-//      happened at extremities of the segment or at a border of the polygon,
-//      which can be useful for limit cases computations.
-//
-//      a1: (array size 3) coordinates of the first endpoint of the segment
-//      a2: (array size 3) coordinates of the second endpoint of the segment
-//      corners: (array size 3xN, N>2) coordinates of the corners of the polygon
-//      normal: (array size 3) normal vector of the surface
-//      intersection: (array size 3) store the intersection point
-//
-//      :returns:
-//             -1 if there is no intersection
-//              0 if the intersection striclty between the segment endpoints and in the polygon interior
-//              1 if the intersection is at endpoint of segment
-//              2 if the intersection is at boundary of polygon
-//              3 if both the above are true
-//      */
-//
-//    int ret1, ret2, ret = 0;
-//
-//    ret1 = intersection_3d_segment_plane(p1, p2, origin, normal, intersection);
-//
-//    if (ret1 == -1)
-//        return -1;  // there is no intersection
-//
-//    if (ret1 == 1)  // intersection at endpoint of segment
-//        ret = 1;
-//
-//    /* project intersection into plane basis */
-//    Eigen::Vector2f flat_intersection = basis.adjoint() * (intersection - origin);
-//
-//    /* check in flatland if intersection is in the polygon */
-//    ret2 = is_inside_2d_polygon(flat_intersection, flat_corners);
-//
-//    if (ret2 < 0)  // intersection is outside of the wall
-//        return -1;
-//
-//    if (ret2 == 1) // intersection is on the boundary of the wall
-//        ret |= 2;
-//
-//    return ret;  // no intersection
-//}
 
 //template<>
 int Wall3D::intersection(
