@@ -170,57 +170,61 @@ PYBIND11_MODULE(libroom, m) {
     .def_readonly("max_dist", &Room<2>::max_dist)
     ;
 
-//    // The Wall class
-//    py::class_<SimplePolygon> simple_polygon_cls(m, "SimplePolygon");
-//
-//    simple_polygon_cls
-////    .def(py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, const std::string &>(),
-////            py::arg("corners"), py::arg("absorption") = Eigen::ArrayXf::Zero(1),
-////    py::arg("scattering") = Eigen::ArrayXf::Zero(1), py::arg("name") = "")
-//    .def("area", &SimplePolygon::area)
-////    .def("intersection", &SimplePolygon::intersection)
-////    .def("intersects", &Wall<3>::intersects)
-////    .def("side", &Wall<3>::side)
-////    .def("reflect", &Wall<3>::reflect)
-////    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&, const Vectorf<3>&, float) const)&Wall<3>::normal_reflect)
-////    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&) const)&Wall<3>::normal_reflect)
-////    .def("same_as", &Wall<3>::same_as)
-////    .def_property_readonly_static("dim", [](py::object /* self */) { return 3; })
-////    .def_readwrite("absorption", &Wall<3>::absorption)
-////    .def_readwrite("scatter", &Wall<3>::scatter)
-////    .def_readwrite("name", &Wall<3>::name)
-////    .def_readonly("corners", &Wall<3>::corners)
-////    .def_readonly("origin", &Wall<3>::origin)
-////    .def_readonly("normal", &Wall<3>::normal)
-////    .def_readonly("basis", &Wall3D::basis)
-////    .def_readonly("flat_corners", &Wall3D::flat_corners)
-//    ;
-//
-//// The Wall class
-//py::class_<PolygonWithHole> polygon_with_hole_cls(m, "PolygonWithHole");
-//
-//polygon_with_hole_cls
-////    .def(py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, const std::string &>(),
-////            py::arg("corners"), py::arg("absorption") = Eigen::ArrayXf::Zero(1),
-////    py::arg("scattering") = Eigen::ArrayXf::Zero(1), py::arg("name") = "")
-//.def("area", &PolygonWithHole::area)
-////.def("intersection", &PolygonWithHole::intersection)
-////    .def("intersects", &Wall<3>::intersects)
-////    .def("side", &Wall<3>::side)
-////    .def("reflect", &Wall<3>::reflect)
-////    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&, const Vectorf<3>&, float) const)&Wall<3>::normal_reflect)
-////    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&) const)&Wall<3>::normal_reflect)
-////    .def("same_as", &Wall<3>::same_as)
-////    .def_property_readonly_static("dim", [](py::object /* self */) { return 3; })
-////    .def_readwrite("absorption", &Wall<3>::absorption)
-////    .def_readwrite("scatter", &Wall<3>::scatter)
-////    .def_readwrite("name", &Wall<3>::name)
-////    .def_readonly("corners", &Wall<3>::corners)
-////    .def_readonly("origin", &Wall<3>::origin)
-////    .def_readonly("normal", &Wall<3>::normal)
-////    .def_readonly("basis", &Wall3D::basis)
-////    .def_readonly("flat_corners", &Wall3D::flat_corners)
-//;
+    // The Polygon base class
+    py::class_<Polygon> polygon_cls(m, "Polygon");
+
+    polygon_cls
+    .def("area", &Polygon::area)
+    .def("intersection", &Polygon::intersection)
+    .def("get_normal", &Polygon::get_normal)
+    .def("get_corners", &Polygon::get_corners)
+    .def("get_origin", &Polygon::get_origin)
+    .def("get_basis", &Polygon::get_basis)
+    .def("get_flat_corners", &Polygon::get_flat_corners)
+    ;
+
+    // The SimplePolygon class
+    py::class_<SimplePolygon> simple_polygon_cls(m, "SimplePolygon");
+
+    simple_polygon_cls
+    .def(
+        py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::Matrix<float,3,1> &>(),
+        py::arg("corners"), py::arg("origin")
+    )
+    .def(
+        py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &>(),
+        py::arg("corners")
+    )
+    .def("area", &SimplePolygon::area)
+    .def("intersection", &SimplePolygon::intersection)
+    .def("get_normal", &SimplePolygon::get_normal)
+    .def("get_corners", &SimplePolygon::get_corners)
+    .def("get_origin", &SimplePolygon::get_origin)
+    .def("get_basis", &SimplePolygon::get_basis)
+    .def("get_flat_corners", &SimplePolygon::get_flat_corners)
+    ;
+
+    // The PolygonWithHole class
+    py::class_<PolygonWithHole> polygon_with_hole_cls(m, "PolygonWithHole");
+
+    polygon_with_hole_cls
+    .def(
+            py::init<
+                const Eigen::Matrix<float,3,Eigen::Dynamic> &,
+                const std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> &
+            >(),
+            py::arg("corners"), py::arg("holes")
+    )
+    .def("area", &PolygonWithHole::area)
+    .def("intersection", &PolygonWithHole::intersection)
+    .def("get_normal", &PolygonWithHole::get_normal)
+    .def("get_corners", &PolygonWithHole::get_corners)
+    .def("get_origin", &PolygonWithHole::get_origin)
+    .def("get_basis", &PolygonWithHole::get_basis)
+    .def("get_flat_corners", &PolygonWithHole::get_flat_corners)
+    .def("get_outer_polygon", &PolygonWithHole::get_outer_polygon)
+    .def("get_inner_polygons", &PolygonWithHole::get_inner_polygons)
+    ;
 
   // The Wall class
   py::class_<Wall3D> wall_cls(m, "Wall");
@@ -229,8 +233,8 @@ PYBIND11_MODULE(libroom, m) {
     .def(py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, const std::string &>(),
         py::arg("corners"), py::arg("absorption") = Eigen::ArrayXf::Zero(1),
         py::arg("scattering") = Eigen::ArrayXf::Zero(1), py::arg("name") = "")
-    .def("area", &Wall<3>::area)
-    .def("intersection", &Wall<3>::intersection)
+    .def("area", &Wall3D::area)
+    .def("intersection", &Wall3D::intersection)
     .def("intersects", &Wall<3>::intersects)
     .def("side", &Wall<3>::side)
     .def("reflect", &Wall<3>::reflect)
@@ -262,8 +266,8 @@ PYBIND11_MODULE(libroom, m) {
     .def(py::init<const Eigen::Matrix<float,2,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, std::string &>(),
         py::arg("corners"), py::arg("absorption") = Eigen::ArrayXf::Zero(1),
         py::arg("scattering") = Eigen::ArrayXf::Zero(1), py::arg("name") = "")
-    .def("area", &Wall<2>::area)
-    .def("intersection", &Wall<2>::intersection)
+    .def("area", &Wall2D::area)
+    .def("intersection", &Wall2D::intersection)
     .def("intersects", &Wall<2>::intersects)
     .def("side", &Wall<2>::side)
     .def("reflect", &Wall<2>::reflect)

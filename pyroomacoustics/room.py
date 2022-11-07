@@ -619,7 +619,7 @@ from .acoustics import OctaveBandsFactory, rt60_eyring, rt60_sabine
 from .beamforming import MicrophoneArray
 from .directivities import CardioidFamily, source_angle_shoebox
 from .experimental import measure_rt60
-from .libroom import Wall, Wall2D
+from .libroom import Wall, Wall2D, Polygon, SimplePolygon, PolygonWithHole
 from .parameters import Material, Physics, constants, eps, make_materials
 from .soundsource import SoundSource
 from .utilities import angle_function

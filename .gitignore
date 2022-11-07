@@ -13,3 +13,5 @@ local_examples/
 
 venv/
 pyroomacoustics/build_rir.c
+pyroomacoustics/*.pyd
+pyroomacoustics.egg-info/
