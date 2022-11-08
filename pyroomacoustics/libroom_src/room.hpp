@@ -84,7 +84,7 @@ class Room
   public:
     static const int dim = D;
 
-    std::vector<Wall<D>> walls;
+    std::vector<std::shared_ptr<Wall<D>>> walls;
     std::vector<int> obstructing_walls;  // List of obstructing walls
     std::vector<Microphone<D>> microphones;  // The microphones are in the room
     float sound_speed = 343.;  // the speed of sound in the room
@@ -124,7 +124,7 @@ class Room
 
     // Constructor for general rooms
     Room(
-        const std::vector<Wall<D>> &_walls,
+        const std::vector<Wall3D> &_walls,
         const std::vector<int> &_obstructing_walls,
         const std::vector<Microphone<D>> &_microphones,
         float _sound_speed,
@@ -137,6 +137,22 @@ class Room
         float _mic_hist_res,
         bool _is_hybrid_sim
         );
+
+    // Constructor for general rooms
+    Room(
+            const std::vector<Wall2D> &_walls,
+            const std::vector<int> &_obstructing_walls,
+            const std::vector<Microphone<D>> &_microphones,
+            float _sound_speed,
+            // parameters for the image source model
+            int _ism_order,
+            // parameters for the ray tracing
+            float _energy_thres,
+            float _time_thres,
+            float _mic_radius,
+            float _mic_hist_res,
+            bool _is_hybrid_sim
+    );
 
     // Constructor for shoebox rooms
     Room(
@@ -199,7 +215,7 @@ class Room
         mic->reset();
     }
 
-    Wall<D> &get_wall(int w) { return walls[w]; }
+    std::shared_ptr<Wall<D>> &get_wall(int w) { return walls[w]; }
 
     // Image source model methods
     int image_source_model(const Vectorf<D> &source_location);
@@ -214,7 +230,7 @@ class Room
 
     bool scat_ray(
         const Eigen::ArrayXf &transmitted,
-        const Wall<D> &wall,
+        const std::shared_ptr<Wall<D>> &wall,
         const Vectorf<D> &prev_last_hit,
         const Vectorf<D> &hit_point,
         float travel_dist

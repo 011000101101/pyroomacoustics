@@ -194,7 +194,7 @@ public:
 };
 
 template<size_t D>
-class Wall
+class Wall: public std::enable_shared_from_this<Wall<D>>
 {
   protected:
     void init();  // common part of initialization for walls of any dimension
@@ -245,12 +245,12 @@ class Wall
     size_t get_n_bands() const { return transmission.size(); }
 
     // methods specific to the concrete types of Wall<D>
-    virtual float area() const;  // compute the area of the wall
+    virtual float area() const = 0;  // compute the area of the wall
     virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
         const Vectorf<D> &p1,
         const Vectorf<D> &p2,
         Eigen::Ref<Vectorf<D>> intersection
-        ) const;
+        ) const = 0;
 
     // utility methods
     int intersects(
@@ -277,18 +277,18 @@ class Wall
         ) const;
 };
 
-class Wall2D: public Wall<2>
+class Wall2D: public Wall<2>, public std::enable_shared_from_this<Wall2D>
 {
 
     public:
 
 
-        virtual float area() const;  // compute the area of the wall
+        virtual float area() const override;  // compute the area of the wall
         virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
                 const Vectorf<2> &p1,
                 const Vectorf<2> &p2,
                 Eigen::Ref<Vectorf<2>> intersection
-        ) const;
+        ) const override;
 
         // Constructor
         Wall2D(
@@ -308,7 +308,7 @@ class Wall2D: public Wall<2>
 
 };
 
-class Wall3D: public Wall<3>
+class Wall3D: public Wall<3>, public std::enable_shared_from_this<Wall3D>
 {
 
     public:
@@ -319,12 +319,12 @@ class Wall3D: public Wall<3>
 //        std::unique_ptr<Polygon> wall_geometry;
         Polygon* wall_geometry;
 
-        virtual float area() const;  // compute the area of the wall
+        virtual float area() const override;  // compute the area of the wall
         virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
                 const Vectorf<3> &p1,
                 const Vectorf<3> &p2,
                 Eigen::Ref<Vectorf<3>> intersection
-        ) const;
+        ) const override;
 
         // Constructor
         Wall3D(

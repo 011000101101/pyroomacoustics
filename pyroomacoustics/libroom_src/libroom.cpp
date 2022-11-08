@@ -48,7 +48,7 @@ PYBIND11_MODULE(libroom, m) {
   // The 3D Room class
   py::class_<Room<3>>(m, "Room")
     .def(py::init<
-        const std::vector<Wall<3>> &,
+        const std::vector<Wall3D> &,
         const std::vector<int> &,
         const std::vector<Microphone<3>> &,
         float, int, float, float, float, float, bool
@@ -111,7 +111,7 @@ PYBIND11_MODULE(libroom, m) {
   py::class_<Room<2>>(m, "Room2D")
     //.def(py::init<py::list, py::list, const Eigen::MatrixXf &>())
     .def(py::init<
-        const std::vector<Wall<2>> &,
+        const std::vector<Wall2D> &,
         const std::vector<int> &,
         const std::vector<Microphone<2>> &,
         float, int, float, float, float, float, bool
@@ -184,7 +184,7 @@ PYBIND11_MODULE(libroom, m) {
     ;
 
     // The SimplePolygon class
-    py::class_<SimplePolygon> simple_polygon_cls(m, "SimplePolygon");
+    py::class_<SimplePolygon, Polygon> simple_polygon_cls(m, "SimplePolygon");
 
     simple_polygon_cls
     .def(
@@ -205,7 +205,7 @@ PYBIND11_MODULE(libroom, m) {
     ;
 
     // The PolygonWithHole class
-    py::class_<PolygonWithHole> polygon_with_hole_cls(m, "PolygonWithHole");
+    py::class_<PolygonWithHole, Polygon> polygon_with_hole_cls(m, "PolygonWithHole");
 
     polygon_with_hole_cls
     .def(
@@ -226,8 +226,33 @@ PYBIND11_MODULE(libroom, m) {
     .def("get_inner_polygons", &PolygonWithHole::get_inner_polygons)
     ;
 
-  // The Wall class
-  py::class_<Wall3D> wall_cls(m, "Wall");
+    // The Wall class
+    py::class_<Wall<3>, std::shared_ptr<Wall<3>>> wall_base_cls(m, "WallBase");
+
+    wall_base_cls
+//    .def(py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, const std::string &>(),
+//            py::arg("corners"), py::arg("absorption") = Eigen::ArrayXf::Zero(1),
+//    py::arg("scattering") = Eigen::ArrayXf::Zero(1), py::arg("name") = "")
+    .def("area", &Wall<3>::area)
+    .def("intersection", &Wall<3>::intersection)
+    .def("intersects", &Wall<3>::intersects)
+    .def("side", &Wall<3>::side)
+    .def("reflect", &Wall<3>::reflect)
+    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&, const Vectorf<3>&, float) const)&Wall<3>::normal_reflect)
+    .def("normal_reflect", (Vectorf<3>(Wall<3>::*)(const Vectorf<3>&) const)&Wall<3>::normal_reflect)
+    .def("same_as", &Wall<3>::same_as)
+    .def_property_readonly_static("dim", [](py::object /* self */) { return 3; })
+    .def_readwrite("absorption", &Wall<3>::absorption)
+    .def_readwrite("scatter", &Wall<3>::scatter)
+    .def_readwrite("name", &Wall<3>::name)
+    .def_readonly("corners", &Wall<3>::corners)
+    .def_readonly("origin", &Wall<3>::origin)
+    .def_readonly("normal", &Wall<3>::normal)
+    ;
+
+//   The Wall class
+  py::class_<Wall3D, Wall<3>, std::shared_ptr<Wall3D>> wall_cls(m, "Wall");
+//  py::class_<Wall3D> wall_cls(m, "Wall");
 
   wall_cls
     .def(py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, const std::string &>(),
@@ -259,8 +284,33 @@ PYBIND11_MODULE(libroom, m) {
     .value("BNDRY", Wall<3>::Isect::BNDRY)
     .export_values();
 
-  // The Wall class
-  py::class_<Wall2D> wall2d_cls(m, "Wall2D");
+//     The Wall class
+    py::class_<Wall<2>, std::shared_ptr<Wall<2>>> wall2d_base_cls(m, "Wall2DBase");
+
+    wall2d_base_cls
+//    .def(py::init<const Eigen::Matrix<float,2,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, std::string &>(),
+//            py::arg("corners"), py::arg("absorption") = Eigen::ArrayXf::Zero(1),
+//    py::arg("scattering") = Eigen::ArrayXf::Zero(1), py::arg("name") = "")
+    .def("area", &Wall<2>::area)
+    .def("intersection", &Wall<2>::intersection)
+    .def("intersects", &Wall<2>::intersects)
+    .def("side", &Wall<2>::side)
+    .def("reflect", &Wall<2>::reflect)
+    .def("normal_reflect", (Vectorf<2>(Wall<2>::*)(const Vectorf<2>&, const Vectorf<2>&, float) const)&Wall<2>::normal_reflect)
+    .def("normal_reflect", (Vectorf<2>(Wall<2>::*)(const Vectorf<2>&) const)&Wall<2>::normal_reflect)
+    .def("same_as", &Wall<2>::same_as)
+    .def_property_readonly_static("dim", [](py::object /* self */) { return 2; })
+    .def_readwrite("absorption", &Wall<2>::absorption)
+    .def_readwrite("scatter", &Wall<2>::scatter)
+    .def_readwrite("name", &Wall<2>::name)
+    .def_readonly("corners", &Wall2D::corners)
+    .def_readonly("origin", &Wall<2>::origin)
+    .def_readonly("normal", &Wall<2>::normal)
+    ;
+
+//   The Wall class
+  py::class_<Wall2D, Wall<2>, std::shared_ptr<Wall2D>> wall2d_cls(m, "Wall2D");
+//  py::class_<Wall2D> wall2d_cls(m, "Wall2D");
 
   wall2d_cls
     .def(py::init<const Eigen::Matrix<float,2,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, std::string &>(),
