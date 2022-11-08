@@ -23,6 +23,7 @@
 # not, see <https://opensource.org/licenses/MIT>.
 from __future__ import division
 
+import unittest
 import numpy as np
 import pyroomacoustics as pra
 
@@ -323,106 +324,90 @@ def run_intersect(lbl):
         )
 
 
-def test_3d_valid():
-    run_intersect("3d_valid")
+class TestWallIntersections(unittest.TestCase):
 
+    def test_3d_valid(self):
+        run_intersect("3d_valid")
 
-def test_3d_endpt_1():
-    run_intersect("3d_endpt_1")
+    def test_3d_endpt_1(self):
+        run_intersect("3d_endpt_1")
 
+    def test_3d_endpt_2(self):
+        run_intersect("3d_endpt_2")
 
-def test_3d_endpt_2():
-    run_intersect("3d_endpt_2")
+    def test_3d_bndry(self):
+        run_intersect("3d_bndry")
 
+    def test_3d_vertex(self):
+        run_intersect("3d_vertex")
 
-def test_3d_bndry():
-    run_intersect("3d_bndry")
+    def test_3d_endpt_bndry_1(self):
+        run_intersect("3d_endpt_bndry_1")
 
+    def test_3d_endpt_bndry_2(self):
+        run_intersect("3d_endpt_bndry_2")
 
-def test_3d_vertex():
-    run_intersect("3d_vertex")
+    def test_3d_vertex_endpt_1(self):
+        run_intersect("3d_vertex_endpt_1")
 
+    def test_3d_vertex_endpt_2(self):
+        run_intersect("3d_vertex_endpt_2")
 
-def test_3d_endpt_bndry_1():
-    run_intersect("3d_endpt_bndry_1")
+    def test_3d_none_1(self):
+        run_intersect("3d_none_1")
 
+    def test_3d_none_2(self):
+        run_intersect("3d_none_2")
 
-def test_3d_endpt_bndry_2():
-    run_intersect("3d_endpt_bndry_2")
+    def test_2d_valid(self):
+        run_intersect("2d_valid")
 
+    def test_2d_endpt_1(self):
+        run_intersect("2d_endpt_1")
 
-def test_3d_vertex_endpt_1():
-    run_intersect("3d_vertex_endpt_1")
+    def test_2d_endpt_2(self):
+        run_intersect("2d_endpt_2")
 
+    def test_2d_bndry_1(self):
+        run_intersect("2d_bndry_1")
 
-def test_3d_vertex_endpt_2():
-    run_intersect("3d_vertex_endpt_2")
+    def test_2d_bndry_2(self):
+        run_intersect("2d_bndry_2")
 
+    def test_2d_bndry_endpt_1(self):
+        run_intersect("2d_bndry_endpt_1")
 
-def test_3d_none_1():
-    run_intersect("3d_none_1")
+    def test_2d_bndry_endpt_2(self):
+        run_intersect("2d_bndry_endpt_2")
 
+    def test_2d_none_1(self):
+        run_intersect("2d_none_1")
 
-def test_3d_none_2():
-    run_intersect("3d_none_2")
-
-
-def test_2d_valid():
-    run_intersect("2d_valid")
-
-
-def test_2d_endpt_1():
-    run_intersect("2d_endpt_1")
-
-
-def test_2d_endpt_2():
-    run_intersect("2d_endpt_2")
-
-
-def test_2d_bndry_1():
-    run_intersect("2d_bndry_1")
-
-
-def test_2d_bndry_2():
-    run_intersect("2d_bndry_2")
-
-
-def test_2d_bndry_endpt_1():
-    run_intersect("2d_bndry_endpt_1")
-
-
-def test_2d_bndry_endpt_2():
-    run_intersect("2d_bndry_endpt_2")
-
-
-def test_2d_none_1():
-    run_intersect("2d_none_1")
-
-
-def test_2d_none_2():
-    run_intersect("2d_none_2")
+    def test_2d_none_2(self):
+        run_intersect("2d_none_2")
 
 
 if __name__ == "__main__":
 
-    test_3d_valid()
-    test_3d_endpt_1()
-    test_3d_endpt_2()
-    test_3d_bndry()
-    test_3d_vertex()
-    test_3d_endpt_bndry_1()
-    test_3d_endpt_bndry_2()
-    test_3d_vertex_endpt_1()
-    test_3d_vertex_endpt_2()
-    test_3d_none_1()
-    test_3d_none_2()
-
-    test_2d_valid()
-    test_2d_endpt_1()
-    test_2d_endpt_2()
-    test_2d_bndry_1()
-    test_2d_bndry_2()
-    test_2d_bndry_endpt_1()
-    test_2d_bndry_endpt_2()
-    test_2d_none_1()
-    test_2d_none_2()
+    unittest.main()
+    # test_3d_valid()
+    # test_3d_endpt_1()
+    # test_3d_endpt_2()
+    # test_3d_bndry()
+    # test_3d_vertex()
+    # test_3d_endpt_bndry_1()
+    # test_3d_endpt_bndry_2()
+    # test_3d_vertex_endpt_1()
+    # test_3d_vertex_endpt_2()
+    # test_3d_none_1()
+    # test_3d_none_2()
+    #
+    # test_2d_valid()
+    # test_2d_endpt_1()
+    # test_2d_endpt_2()
+    # test_2d_bndry_1()
+    # test_2d_bndry_2()
+    # test_2d_bndry_endpt_1()
+    # test_2d_bndry_endpt_2()
+    # test_2d_none_1()
+    # test_2d_none_2()

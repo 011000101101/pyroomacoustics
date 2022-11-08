@@ -898,7 +898,7 @@ bool Room<D>::scat_ray(
       std::cout << "FLAG 3\n";
   }
     std::cout << "FLAG 99\n";
-  std::cout << ret;
+  std::cout << ret << "\n";
   std::cout << "!ndcaslkjhr!!!";
 
   return ret;
