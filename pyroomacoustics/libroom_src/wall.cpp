@@ -231,12 +231,6 @@ float Wall3D::area() const
 }
 
 template<size_t D>
-float Wall<D>::area() const
-{
-    return 0.;
-}
-
-template<size_t D>
 void Wall<D>::init()
 {
   // compute transmission coefficients from absorption
@@ -259,6 +253,7 @@ Wall<D>::Wall<D>(
     const std::string &_name
     ) : corners(_corners), absorption(_absorption), scatter(_scatter), name(_name)
 {
+    init();
 }
 
 //template<>
@@ -270,7 +265,6 @@ Wall2D::Wall2D(
     )
   : Wall<2>(_corners, _absorption, _scatter, _name)
 {
-  init();
 
   // Pick one of the corners as the origin of the wall
   origin = corners.col(0);
@@ -291,7 +285,6 @@ Wall3D::Wall3D(
     )
   : Wall<3>(_corners, _absorption, _scatter, _name), wall_geometry(Polygon::make_polygon(_corners, _holes))
 {
-    init();
 
     // shadow members of wall_geometry to allow direct access from outside for backward compatibility
     // shadowed members are constant, therefore these copies are always valid
@@ -303,16 +296,6 @@ Wall3D::Wall3D(
 //    normal = wall_geometry->get_normal();
     //flat_corners = wall_geometry->get_flat_corners();
     normal = wall_geometry->get_normal();
-}
-
-template<size_t D>
-int Wall<D>::intersection(
-        const Eigen::Matrix<float,D,1> &p1,
-        const Eigen::Matrix<float,D,1> &p2,
-        Eigen::Ref<Eigen::Matrix<float,D,1>> intersection
-) const
-{
-    return -1;
 }
 
 int Wall2D::intersection(
