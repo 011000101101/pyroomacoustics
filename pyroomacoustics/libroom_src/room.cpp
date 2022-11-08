@@ -47,7 +47,6 @@ size_t number_image_sources_3(size_t max_order) {
   return 1 + 2 * max_order * (2 * max_order_sq + 3 * max_order + 4) / 3;
 }
 
-template<>
 Room<3>::Room(
     const std::vector<Wall3D> &_walls,
     const std::vector<int> &_obstructing_walls,
@@ -76,7 +75,6 @@ Room<3>::Room(
   init();
 }
 
-template<>
 Room<2>::Room(
         const std::vector<Wall2D> &_walls,
         const std::vector<int> &_obstructing_walls,
@@ -822,7 +820,8 @@ bool Room<D>::scat_ray(
   // Convert the energy threshold to transmission threshold (make this more efficient at some point)
   float distance_thres = time_thres * sound_speed;
 
-  bool ret = true;  
+  bool ret = true;
+    std::cout << "ret: " << ret << "\n";
   for(size_t k(0); k < microphones.size(); ++k)
   {
 
@@ -834,6 +833,8 @@ bool Room<D>::scat_ray(
      */
     if (wall->side(mic_pos) != wall->side(prev_last_hit))
     {
+        std::cout << "FALSE 1\n";
+        std::cout << "ret: " << ret << "\n";
       ret = false;
       continue;
     }
@@ -844,23 +845,27 @@ bool Room<D>::scat_ray(
     float hit_distance(0.);
 
   std::cout << "Hello world\n";
+      std::cout << "ret: " << ret << "\n";
 
     if (!is_shoebox)
       std::tie(dont_care, next_wall_index, hit_distance) = next_wall_hit(hit_point, mic_pos, true);
 
       std::cout << "FLAG 1\n";
+      std::cout << "ret: " << ret << "\n";
 
     // If no wall obstructs the scattered ray
     if (next_wall_index == -1)
     {
 
         std::cout << "FLAG 1-1\n";
+        std::cout << "ret: " << ret << "\n";
       // As the ray is shot towards the microphone center,
       // the hop dist can be easily computed
       Vectorf<D> hit_point_to_mic = mic_pos - hit_point;
       float hop_dist = hit_point_to_mic.norm();
       float travel_dist_at_mic = travel_dist + hop_dist;
         std::cout << "FLAG 1-2\n";
+        std::cout << "ret: " << ret << "\n";
 
       // compute the scattered energy reaching the microphone
       float h_sq = hop_dist * hop_dist;
@@ -869,13 +874,15 @@ bool Room<D>::scat_ray(
       // facing out of room so we take abs
       float p_lambert = 2 * std::abs(wall->cosine_angle(hit_point_to_mic));
       Eigen::VectorXf scat_trans = wall->scatter * transmitted * p_hit_equal * p_lambert;
-      std::cout << "FLAG 1-3\n";
+        std::cout << "FLAG 1-3\n";
+        std::cout << "ret: " << ret << "\n";
 
       // We add an entry to output and we increment the right element
       // of scat_per_slot
       if (travel_dist_at_mic < distance_thres && scat_trans.maxCoeff() > energy_thres)
       {
-        std::cout << "FLAG 1-4\n";
+          std::cout << "FLAG 1-4\n";
+          std::cout << "ret: " << ret << "\n";
         //output[k].push_back(Hit(travel_dist_at_mic, scat_trans));        
         //microphones[k].log_histogram(output[k].back(), hit_point);
         double r_sq = double(travel_dist_at_mic) * travel_dist_at_mic;
@@ -883,15 +890,20 @@ bool Room<D>::scat_ray(
         Eigen::ArrayXf energy = scat_trans / (r_sq * p_hit) ;
         microphones[k].log_histogram(travel_dist_at_mic, energy, hit_point);
           std::cout << "FLAG 1-4-1\n";
+          std::cout << "ret: " << ret << "\n";
       }
-      else
+      else {
           std::cout << "FLAG 1-5\n";
-        ret = false;
+          std::cout << "FALSE 2\n";
+          std::cout << "ret: " << ret << "\n";
+          ret = false;
+      }
     }
     else
     {
 
         std::cout << "FLAG 2\n";
+        std::cout << "FALSE 3\n";
       ret = false;  // if a wall intersects the scattered ray, we return false
     }
 
@@ -901,6 +913,7 @@ bool Room<D>::scat_ray(
   std::cout << ret << "\n";
   std::cout << "!ndcaslkjhr!!!";
 
+    std::cout << "ret: " << ret << "\n";
   return ret;
 }
 
@@ -925,6 +938,7 @@ void Room<D>::simul_ray(
   // ------------------ INIT --------------------
   // What we need to trace the ray
   // the origin of the ray
+
   Vectorf<D> start = source_pos;
   // the direction of the ray (unit vector)
   Vectorf<D> dir;
@@ -932,6 +946,7 @@ void Room<D>::simul_ray(
     dir.head(2) = Eigen::Vector2f(cos(phi), sin(phi));
   else if (D == 3)
     dir.head(3) = Eigen::Vector3f(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+
 
   // The following initializations are arbitrary and does not count since we set
   // the boolean to false
@@ -941,15 +956,18 @@ void Room<D>::simul_ray(
   Eigen::ArrayXf transmitted = Eigen::ArrayXf::Ones(n_bands) * energy_0;
   Eigen::ArrayXf energy = Eigen::ArrayXf::Ones(n_bands);
   float travel_dist = 0;
+
   
   // To count the number of times the ray bounces on the walls
   // For hybrid generation we add a ray to output only if specular_counter
   // is higher than the ism order.
   int specular_counter(0);
 
+
   // Convert the energy threshold to transmission threshold
   float e_thres = energy_0 * energy_thres;
   float distance_thres = time_thres * sound_speed;
+
 
   //---------------------------------------------
 
@@ -960,6 +978,7 @@ void Room<D>::simul_ray(
 
   while (true)
   {
+
     // Find the next hit point
     float hit_distance(0);
     std::tie(hit_point, next_wall_index, hit_distance) = next_wall_hit(start, start + dir * max_dist, false);
@@ -970,6 +989,7 @@ void Room<D>::simul_ray(
 
     // Intersected wall
     std::shared_ptr<Wall<D>> &wall = walls[next_wall_index];
+
 
     // Check if the specular ray hits any of the microphone
     if (!(is_hybrid_sim && specular_counter < ism_order))
@@ -1003,15 +1023,19 @@ void Room<D>::simul_ray(
           microphones[k].log_histogram(travel_dist_at_mic, energy, start);
         }
       }
+
     }
 
     // Update the characteristics
     travel_dist += hit_distance;
     transmitted *= wall->get_energy_reflection();
 
+
+
     // Let's shoot the scattered ray induced by the rebound on the wall
     if (wall->scatter.maxCoeff() > 0.f)
     {
+
       // Shoot the scattered ray
       scat_ray(
           transmitted,
@@ -1021,20 +1045,33 @@ void Room<D>::simul_ray(
           travel_dist
           );
 
+
       // The overall ray's energy gets decreased by the total
       // amount of scattered energy
       transmitted *= (1.f - wall->scatter);
     }
 
+
+
+
+
+
+
+
     // Check if we reach the thresholds for this ray
-    if (travel_dist > distance_thres || transmitted.maxCoeff() < e_thres)
-      break;
+    if (travel_dist > distance_thres || transmitted.maxCoeff() < e_thres) {
+
+        break;
+    }
+
 
     // set up for next iteration
     specular_counter += 1;
     dir = wall->normal_reflect(dir);  // conserves length
     start = hit_point;
+
   }
+
 }
 
 
@@ -1044,19 +1081,27 @@ void Room<D>::ray_tracing(
   const Vectorf<D> source_pos
   )
 {
+    std::cout << "Hello world!\n";
   // float energy_0 = 2.f / (mic_radius * mic_radius * angles.cols());
   float energy_0 = 2.f / angles.cols();
+    std::cout << "FLAG 1\n";
 
   for (int k(0) ; k < angles.cols() ; k++)
   {
+      std::cout << "FLAG 1.1\n";
     float phi = angles.coeff(0,k);
     float theta = pi_2;
+      std::cout << "FLAG 1.2\n";
 
     if (D == 3)
+        std::cout << "FLAG 1.2.2\n";
       theta = angles.coeff(1,k);
+      std::cout << "FLAG 1.3\n";
 
     simul_ray(phi, theta, source_pos, energy_0);
+      std::cout << "FLAG 1.4\n";
   }
+    std::cout << "FLAG 2\n";
 }
 
 
