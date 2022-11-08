@@ -47,11 +47,11 @@ size_t number_image_sources_3(size_t max_order) {
   return 1 + 2 * max_order * (2 * max_order_sq + 3 * max_order + 4) / 3;
 }
 
-template<size_t D>
-Room<D>::Room(
-    const std::vector<Wall<D>> &_walls,
+template<>
+Room<3>::Room(
+    const std::vector<Wall3D> &_walls,
     const std::vector<int> &_obstructing_walls,
-    const std::vector<Microphone<D>> &_microphones,
+    const std::vector<Microphone<3>> &_microphones,
     float _sound_speed,
     // parameters for the image source model
     int _ism_order,
@@ -62,13 +62,47 @@ Room<D>::Room(
     float _mic_hist_res,
     bool _is_hybrid_sim
     )
-  : walls(_walls), obstructing_walls(_obstructing_walls), microphones(_microphones),
+  :
+//  walls(_walls),
+  obstructing_walls(_obstructing_walls), microphones(_microphones),
   sound_speed(_sound_speed), ism_order(_ism_order),
   energy_thres(_energy_thres), time_thres(_time_thres), mic_radius(_mic_radius),
   mic_radius_sq(_mic_radius * _mic_radius),
   mic_hist_res(_mic_hist_res), is_hybrid_sim(_is_hybrid_sim), is_shoebox(false)
 {
+    for (unsigned int i = 0; i < _walls.size(); i++){
+        walls.emplace_back(std::make_shared<Wall3D>(_walls[i]));
+    }
   init();
+}
+
+template<>
+Room<2>::Room(
+        const std::vector<Wall2D> &_walls,
+        const std::vector<int> &_obstructing_walls,
+        const std::vector<Microphone<2>> &_microphones,
+        float _sound_speed,
+        // parameters for the image source model
+        int _ism_order,
+        // parameters for the ray tracing
+        float _energy_thres,
+        float _time_thres,
+        float _mic_radius,
+        float _mic_hist_res,
+        bool _is_hybrid_sim
+)
+        :
+//  walls(_walls),
+        obstructing_walls(_obstructing_walls), microphones(_microphones),
+        sound_speed(_sound_speed), ism_order(_ism_order),
+        energy_thres(_energy_thres), time_thres(_time_thres), mic_radius(_mic_radius),
+        mic_radius_sq(_mic_radius * _mic_radius),
+        mic_hist_res(_mic_hist_res), is_hybrid_sim(_is_hybrid_sim), is_shoebox(false)
+{
+    for (unsigned int i = 0; i < _walls.size(); i++){
+        walls.emplace_back(std::make_shared<Wall2D>(_walls[i]));
+    }
+    init();
 }
 
 template<size_t D>
@@ -115,16 +149,16 @@ void Room<2>::make_shoebox_walls(
   corners.resize(2, 2);
 
   corners << 0.f, rs[0], 0.f, 0.f;
-  walls.push_back(Wall2D(corners, abs.col(2), scat.col(2), "south"));
+  walls.emplace_back(std::make_shared<Wall2D>(corners, abs.col(2), scat.col(2), "south"));
 
   corners << rs[0], rs[0], 0.f, rs[1];
-  walls.push_back(Wall2D(corners, abs.col(1), scat.col(1), "east"));
+  walls.emplace_back(std::make_shared<Wall2D>(corners, abs.col(1), scat.col(1), "east"));
 
   corners << rs[0], 0.f, rs[1], rs[1];
-  walls.push_back(Wall2D(corners, abs.col(3), scat.col(3), "north"));
+  walls.emplace_back(std::make_shared<Wall2D>(corners, abs.col(3), scat.col(3), "north"));
 
   corners << 0.f, 0.f, rs[1], 0.f;
-  walls.push_back(Wall2D(corners, abs.col(0), scat.col(0), "west"));
+  walls.emplace_back(std::make_shared<Wall2D>(corners, abs.col(0), scat.col(0), "west"));
 }
 
 
@@ -141,32 +175,32 @@ void Room<3>::make_shoebox_walls(
   corners << 0.f, 0.f, 0.f, 0.f,
              rs[1], 0.f, 0.f, rs[1],
              0.f, 0.f, rs[2], rs[2];
-  walls.push_back(Wall3D(corners, abs.col(0), scat.col(0), "west"));
+  walls.emplace_back(std::make_shared<Wall3D>(corners, abs.col(0), scat.col(0), "west"));
 
   corners << rs[0], rs[0], rs[0], rs[0], 
              0.f, rs[1], rs[1], 0.f, 
              0.f, 0.f, rs[2], rs[2];
-  walls.push_back(Wall3D(corners, abs.col(1), scat.col(1), "east"));
+  walls.emplace_back(std::make_shared<Wall3D>(corners, abs.col(1), scat.col(1), "east"));
 
   corners << 0.f, rs[0], rs[0], 0.f,
              0.f, 0.f, 0.f, 0.f, 
              0.f, 0.f, rs[2], rs[2];
-  walls.push_back(Wall3D(corners, abs.col(2), scat.col(2), "south"));
+  walls.emplace_back(std::make_shared<Wall3D>(corners, abs.col(2), scat.col(2), "south"));
 
   corners << rs[0], 0.f, 0.f, rs[0],
              rs[1], rs[1], rs[1], rs[1],
              0.f, 0.f, rs[2], rs[2];
-  walls.push_back(Wall3D(corners, abs.col(3), scat.col(3), "north"));
+  walls.emplace_back(std::make_shared<Wall3D>(corners, abs.col(3), scat.col(3), "north"));
 
   corners << rs[0], 0.f, 0.f, rs[0],
              0.f, 0.f, rs[1], rs[1],
              0.f, 0.f, 0.f, 0.f;
-  walls.push_back(Wall3D(corners, abs.col(4), scat.col(4), "floor"));
+  walls.emplace_back(std::make_shared<Wall3D>(corners, abs.col(4), scat.col(4), "floor"));
 
   corners << rs[0], rs[0], 0.f, 0.f,
              0.f, rs[1], rs[1], 0.f,
              rs[2], rs[2], rs[2], rs[2];
-  walls.push_back(Wall3D(corners, abs.col(5), scat.col(5), "ceiling"));
+  walls.emplace_back(std::make_shared<Wall3D>(corners, abs.col(5), scat.col(5), "ceiling"));
 }
 
 
@@ -178,9 +212,9 @@ void Room<D>::init()
    */
   if (walls.size() > D)
   {
-    n_bands = walls[0].get_n_bands();
+    n_bands = walls[0]->get_n_bands();
     for (auto &wall : walls)
-      if (n_bands != wall.get_n_bands())
+      if (n_bands != wall->get_n_bands())
       {
         throw std::runtime_error("Error: All walls should have the same number of frequency bands");
       }
@@ -298,17 +332,17 @@ void Room<D>::image_sources_dfs(ImageSource<D> &is, int max_order)
   // Then, check all the reflections across the walls
   for (size_t wi=0 ;  wi < walls.size() ; wi++)
   {
-    int dir = walls[wi].reflect(is.loc, new_is.loc);  // the reflected location
+    int dir = walls[wi]->reflect(is.loc, new_is.loc);  // the reflected location
 
     // We only check valid reflections (normals should point outward from the room
     if (dir <= 0)
       continue;
 
     // The reflection is valid, fill in the image source attributes
-    new_is.attenuation = is.attenuation * walls[wi].get_transmission();
-    if (walls[wi].scatter.maxCoeff() > 0.f && is_hybrid_sim)
+    new_is.attenuation = is.attenuation * walls[wi]->get_transmission();
+    if (walls[wi]->scatter.maxCoeff() > 0.f && is_hybrid_sim)
     {
-      new_is.attenuation *= (1 - walls[wi].scatter).sqrt();
+      new_is.attenuation *= (1 - walls[wi]->scatter).sqrt();
     }
     new_is.order = is.order + 1;
     new_is.gen_wall = wi;
@@ -346,7 +380,7 @@ bool Room<D>::is_visible_dfs(const Vectorf<D> &p, ImageSource<D> &is)
     int wall_id = is.gen_wall;
 
     // check if the generating wall is intersected
-    int ret = walls[wall_id].intersection(p, is.loc, intersection);
+    int ret = walls[wall_id]->intersection(p, is.loc, intersection);
 
     // The source is not visible if the ray does not intersect
     // the generating wall
@@ -387,7 +421,7 @@ bool Room<D>::is_obstructed_dfs(const Vectorf<D> &p, ImageSource<D> &is)
     if (wall_id != gen_wall_id)
     {
       Vectorf<D> intersection;
-      int ret = walls[wall_id].intersection(is.loc, p, intersection);
+      int ret = walls[wall_id]->intersection(is.loc, p, intersection);
 
       // There is an intersection and it is distinct from segment endpoints
       if (ret == Wall<D>::Isect::VALID || ret == Wall<D>::Isect::BNDRY)
@@ -395,11 +429,11 @@ bool Room<D>::is_obstructed_dfs(const Vectorf<D> &p, ImageSource<D> &is)
         if (is.parent != NULL)
         {
           // Test if the intersection point and the image are on
-          // opposite sides of the generating wall 
+          // opposite sides of the generating wall
           // We ignore the obstruction if it is inside the
           // generating wall (it is what happens in a corner)
-          int img_side = walls[is.gen_wall].side(is.loc);
-          int intersection_side = walls[is.gen_wall].side(intersection);
+          int img_side = walls[is.gen_wall]->side(is.loc);
+          int intersection_side = walls[is.gen_wall]->side(intersection);
 
           if (img_side != intersection_side && intersection_side != 0)
             return true;
@@ -547,19 +581,20 @@ float Room<D>::get_max_distance()
 
   for (size_t i(0); i < n_walls; ++i)
   {
-    Wall<D> wi = this -> get_wall(i);
+    std::shared_ptr<Wall<D>> wi = this -> get_wall(i);
+//    Wall<D> wi = this -> get_wall(i);
 
     Eigen::Vector3f max_coord(0, 0, 0);
     Eigen::Vector3f min_coord(0, 0, 0);
 
     if (D == 2)
     {
-      max_coord.head(2) = wi.corners.topRows(D).rowwise().maxCoeff();
-      min_coord.head(2) = wi.corners.topRows(D).rowwise().minCoeff();
+      max_coord.head(2) = wi->corners.topRows(D).rowwise().maxCoeff();
+      min_coord.head(2) = wi->corners.topRows(D).rowwise().minCoeff();
     } else
     {
-      max_coord = wi.corners.topRows(D).rowwise().maxCoeff();
-      min_coord = wi.corners.topRows(D).rowwise().minCoeff();
+      max_coord = wi->corners.topRows(D).rowwise().maxCoeff();
+      min_coord = wi->corners.topRows(D).rowwise().minCoeff();
     }
 
 	// For the first wall, we have nothing to compare to
@@ -726,13 +761,13 @@ next_plane:
 
     for (size_t i(0) ; i < n_walls ; ++i)
     {
-      Wall<D> & w = scattered_ray ? walls[obstructing_walls[i]] : walls[i];
+      std::shared_ptr<Wall<D>> & w = scattered_ray ? walls[obstructing_walls[i]] : walls[i];
 
       // To store the result of this iteration
       Vectorf<D> temp_hit;
 
       // As a side effect, temp_hit gets a value (VectorXf) here
-      int ret = w.intersection(start, end, temp_hit);
+      int ret = w->intersection(start, end, temp_hit);
 
       if (ret > -1)
       {
@@ -761,7 +796,7 @@ next_plane:
 template<size_t D>
 bool Room<D>::scat_ray(
     const Eigen::ArrayXf &transmitted,
-    const Wall<D> &wall,
+    const std::shared_ptr<Wall<D>> &wall,
     const Vectorf<D> &prev_last_hit,
     const Vectorf<D> &hit_point,
     float travel_dist
@@ -797,7 +832,7 @@ bool Room<D>::scat_ray(
      * We also need to check that both the microphone and the
      * previous hit point are on the same side of the wall
      */
-    if (wall.side(mic_pos) != wall.side(prev_last_hit))
+    if (wall->side(mic_pos) != wall->side(prev_last_hit))
     {
       ret = false;
       continue;
@@ -808,46 +843,63 @@ bool Room<D>::scat_ray(
     int next_wall_index(-1);
     float hit_distance(0.);
 
+  std::cout << "Hello world\n";
+
     if (!is_shoebox)
       std::tie(dont_care, next_wall_index, hit_distance) = next_wall_hit(hit_point, mic_pos, true);
+
+      std::cout << "FLAG 1\n";
 
     // If no wall obstructs the scattered ray
     if (next_wall_index == -1)
     {
+
+        std::cout << "FLAG 1-1\n";
       // As the ray is shot towards the microphone center,
       // the hop dist can be easily computed
       Vectorf<D> hit_point_to_mic = mic_pos - hit_point;
       float hop_dist = hit_point_to_mic.norm();
       float travel_dist_at_mic = travel_dist + hop_dist;
+        std::cout << "FLAG 1-2\n";
 
       // compute the scattered energy reaching the microphone
       float h_sq = hop_dist * hop_dist;
       float p_hit_equal = 1.f - sqrt(1.f - mic_radius_sq / h_sq);
       // cosine angle should be positive, but could be negative if normal is
       // facing out of room so we take abs
-      float p_lambert = 2 * std::abs(wall.cosine_angle(hit_point_to_mic));
-      Eigen::ArrayXf scat_trans = wall.scatter * transmitted * p_hit_equal * p_lambert;
+      float p_lambert = 2 * std::abs(wall->cosine_angle(hit_point_to_mic));
+      Eigen::VectorXf scat_trans = wall->scatter * transmitted * p_hit_equal * p_lambert;
+      std::cout << "FLAG 1-3\n";
 
       // We add an entry to output and we increment the right element
       // of scat_per_slot
       if (travel_dist_at_mic < distance_thres && scat_trans.maxCoeff() > energy_thres)
       {
-
+        std::cout << "FLAG 1-4\n";
         //output[k].push_back(Hit(travel_dist_at_mic, scat_trans));        
         //microphones[k].log_histogram(output[k].back(), hit_point);
         double r_sq = double(travel_dist_at_mic) * travel_dist_at_mic;
         auto p_hit = (1 - sqrt(1 - mic_radius_sq / std::max(mic_radius_sq, r_sq)));
         Eigen::ArrayXf energy = scat_trans / (r_sq * p_hit) ;
         microphones[k].log_histogram(travel_dist_at_mic, energy, hit_point);
+          std::cout << "FLAG 1-4-1\n";
       }
       else
+          std::cout << "FLAG 1-5\n";
         ret = false;
     }
     else
     {
+
+        std::cout << "FLAG 2\n";
       ret = false;  // if a wall intersects the scattered ray, we return false
     }
+
+      std::cout << "FLAG 3\n";
   }
+    std::cout << "FLAG 99\n";
+  std::cout << ret;
+  std::cout << "!ndcaslkjhr!!!";
 
   return ret;
 }
@@ -917,7 +969,7 @@ void Room<D>::simul_ray(
       break;
 
     // Intersected wall
-    Wall<D> &wall = walls[next_wall_index];
+    std::shared_ptr<Wall<D>> &wall = walls[next_wall_index];
 
     // Check if the specular ray hits any of the microphone
     if (!(is_hybrid_sim && specular_counter < ism_order))
@@ -955,10 +1007,10 @@ void Room<D>::simul_ray(
 
     // Update the characteristics
     travel_dist += hit_distance;
-    transmitted *= wall.get_energy_reflection();
+    transmitted *= wall->get_energy_reflection();
 
     // Let's shoot the scattered ray induced by the rebound on the wall
-    if (wall.scatter.maxCoeff() > 0.f)
+    if (wall->scatter.maxCoeff() > 0.f)
     {
       // Shoot the scattered ray
       scat_ray(
@@ -971,7 +1023,7 @@ void Room<D>::simul_ray(
 
       // The overall ray's energy gets decreased by the total
       // amount of scattered energy
-      transmitted *= (1.f - wall.scatter);
+      transmitted *= (1.f - wall->scatter);
     }
 
     // Check if we reach the thresholds for this ray
@@ -980,7 +1032,7 @@ void Room<D>::simul_ray(
 
     // set up for next iteration
     specular_counter += 1;
-    dir = wall.normal_reflect(dir);  // conserves length
+    dir = wall->normal_reflect(dir);  // conserves length
     start = hit_point;
   }
 }
@@ -1138,16 +1190,16 @@ bool Room<D>::contains(const Vectorf<D> point)
 
   for (size_t i(0); i < n_walls; ++i)
   {
-    Wall<D> &wi = this->get_wall(i);
+    std::shared_ptr<Wall<D>> &wi = this->get_wall(i);
 
     // First iteration		
     if (i == 0)
     {
-      min_coord.col(0) = wi.corners.rowwise().minCoeff();
+      min_coord.col(0) = wi->corners.rowwise().minCoeff();
     }
     else
     {
-      min_coord.col(1) = wi.corners.rowwise().minCoeff();
+      min_coord.col(1) = wi->corners.rowwise().minCoeff();
       min_coord.col(0) = min_coord.rowwise().minCoeff();
     }
   }
@@ -1183,8 +1235,8 @@ bool Room<D>::contains(const Vectorf<D> point)
     for (size_t i(0); i < n_walls; ++i)
     {
 
-      Wall<D> & w = walls[i];
-      int result = w.intersects(outside_point, point);
+      std::shared_ptr<Wall<D>> & w = walls[i];
+      int result = w->intersects(outside_point, point);
       ambiguous_intersection = ambiguous_intersection || (result > 0);
 
       if (result > -1)
