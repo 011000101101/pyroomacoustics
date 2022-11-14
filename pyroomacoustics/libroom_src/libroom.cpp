@@ -255,9 +255,20 @@ PYBIND11_MODULE(libroom, m) {
 //  py::class_<Wall3D> wall_cls(m, "Wall");
 
   wall_cls
-    .def(py::init<const Eigen::Matrix<float,3,Eigen::Dynamic> &, const Eigen::ArrayXf &, const Eigen::ArrayXf &, const std::string &>(),
-        py::arg("corners"), py::arg("absorption") = Eigen::ArrayXf::Zero(1),
-        py::arg("scattering") = Eigen::ArrayXf::Zero(1), py::arg("name") = "")
+    .def(
+        py::init<
+            const Eigen::Matrix<float,3,Eigen::Dynamic> &,
+            const std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> &,
+            const Eigen::ArrayXf &,
+            const Eigen::ArrayXf &,
+            const std::string &
+        >(),
+        py::arg("corners"),
+        py::arg("holes") = std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>>(),
+        py::arg("absorption") = Eigen::ArrayXf::Zero(1),
+        py::arg("scattering") = Eigen::ArrayXf::Zero(1),
+        py::arg("name") = ""
+    )
     .def("area", &Wall3D::area)
     .def("intersection", &Wall3D::intersection)
     .def("intersects", &Wall<3>::intersects)

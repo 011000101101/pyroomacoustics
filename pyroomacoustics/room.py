@@ -625,11 +625,12 @@ from .soundsource import SoundSource
 from .utilities import angle_function
 
 
-def wall_factory(corners, absorption, scattering, name=""):
+def wall_factory(corners, absorption, scattering, holes=None, name=""):
     """Call the correct method according to wall dimension"""
     if corners.shape[0] == 3:
         return Wall(
             corners,
+            [] if holes is None else holes,
             absorption,
             scattering,
             name,

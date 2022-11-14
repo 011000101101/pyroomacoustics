@@ -159,6 +159,11 @@ class TestRayEnergy(unittest.TestCase):
         self.assertTrue(np.allclose(histogram_rt_poly, histogram_gt))
         self.assertTrue(np.allclose(histogram_rt_cube, histogram_gt))
 
+        del room_poly
+        for wall in walls:
+            del wall
+        print("what³")
+
 
 if __name__ == "__main__":
     unittest.main()
