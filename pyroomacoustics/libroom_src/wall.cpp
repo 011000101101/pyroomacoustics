@@ -31,26 +31,26 @@
 #include "geometry.hpp"
 #include "common.hpp"
 
-Polygon *Polygon::make_polygon(
+std::shared_ptr<Polygon> Polygon::make_polygon(
         Eigen::Matrix<float, 3, Eigen::Dynamic> corners,
         std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> holes
 ) {
     if(holes.size() > 0) {
-        return new PolygonWithHole(corners, holes);
+        return std::make_shared<PolygonWithHole>(corners, holes);
     }
     else {
-        return new SimplePolygon(corners);
+        return std::make_shared<SimplePolygon>(corners);
     }
 }
 
-Polygon *Polygon::make_polygon(const Polygon &p) {
+std::shared_ptr<Polygon> Polygon::make_polygon(const Polygon &p) {
     if (const PolygonWithHole * derived_ptr = dynamic_cast<const PolygonWithHole *>(&p))
     {
-        return new PolygonWithHole(*derived_ptr);
+        return std::make_shared<PolygonWithHole>(*derived_ptr);
     }
     else if (const SimplePolygon * derived_ptr = dynamic_cast<const SimplePolygon *>(&p))
     {
-        return new SimplePolygon(*derived_ptr);
+        return std::make_shared<SimplePolygon>(*derived_ptr);
     }
 }
 

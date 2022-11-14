@@ -674,10 +674,16 @@ from .soundsource import SoundSource
 from .utilities import angle_function, fractional_delay
 
 
-def wall_factory(corners, absorption, scattering, name=""):
+def wall_factory(corners, absorption, scattering, holes=None, name=""):
     """Call the correct method according to wall dimension"""
     if corners.shape[0] == 3:
-        return Wall(corners, absorption, scattering, name)
+        return Wall(
+            corners,
+            [] if holes is None else holes,
+            absorption,
+            scattering,
+            name,
+        )
     elif corners.shape[0] == 2:
         return Wall2D(corners, absorption, scattering, name)
     else:

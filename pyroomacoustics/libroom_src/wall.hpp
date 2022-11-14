@@ -51,11 +51,11 @@ class Polygon
     public:
 
         //factory methods
-        static Polygon *make_polygon(
+        static std::shared_ptr<Polygon> make_polygon(
                 Eigen::Matrix<float, 3, Eigen::Dynamic> corners,
                 std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> holes
         );
-        static Polygon *make_polygon(const Polygon &p);  // for copying
+        static std::shared_ptr<Polygon> make_polygon(const Polygon &p);  // for copying
 
         //getters
         virtual Eigen::Matrix<float, 3, 1> get_normal() const = 0;
@@ -316,8 +316,8 @@ class Wall3D: public Wall<3>, public std::enable_shared_from_this<Wall3D>
         /* for 3D wall, provide local basis for plane of wall */
         Eigen::Matrix<float, 3, 2> basis;
         Eigen::Matrix<float, 2, Eigen::Dynamic> flat_corners;
-//        std::unique_ptr<Polygon> wall_geometry;
-        Polygon* wall_geometry;
+        std::shared_ptr<Polygon> wall_geometry;
+//        Polygon* wall_geometry;
 
         virtual float area() const override;  // compute the area of the wall
         virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
@@ -371,10 +371,10 @@ class Wall3D: public Wall<3>, public std::enable_shared_from_this<Wall3D>
             normal = w.wall_geometry->get_normal();
         }
 
-        ~Wall3D()
-        {
-            delete wall_geometry;
-        }
+//        ~Wall3D()
+//        {
+//            delete wall_geometry;
+//        }
 };
 
 

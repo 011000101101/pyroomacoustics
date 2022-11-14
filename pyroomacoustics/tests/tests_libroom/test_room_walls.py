@@ -511,10 +511,6 @@ class TestRoomWalls(unittest.TestCase):
             not result
         )
         print("what?")
-        print("what?")
-        print("what?")
-        print("what?")
-        print("what?")
 
     def test_scat_ray_ok(self):
 
@@ -550,9 +546,11 @@ class TestRoomWalls(unittest.TestCase):
         output = [
             [pra.libroom.Hit(1)]
         ]  # arbitrary initialisation to have the correct shape
+        result = room.scat_ray(energy, prev_wall, prev_last_hit, last_hit, total_dist)
         self.assertTrue(
-            room.scat_ray(energy, prev_wall, prev_last_hit, last_hit, total_dist)
+            result
         )
+        print("what²")
 
     """
     def test_scat_ray_energy(self):
