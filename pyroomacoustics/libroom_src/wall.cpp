@@ -225,6 +225,69 @@ int PolygonWithHole::intersection(
     }
 }
 
+bool SimplePolygon::same_as(const std::shared_ptr<Polygon> that) const
+{
+    /*
+    Checks if two walls are the same, based on their corners of the walls.
+    Be careful : it will return true for two identical walls that belongs
+    to two different rooms !
+    */
+    if (const std::shared_ptr<const SimplePolygon> other = std::dynamic_pointer_cast<const SimplePolygon>(that))
+    {
+        // Not the same number of corners
+        if (corners.cols() != other->get_corners().cols())
+        {
+            return false;
+        }
+        // check corner coordinates
+        return (corners - other->get_corners()).cwiseAbs().sum() == 0.;
+    }
+    else
+    {
+        // The two walls are not of the same geometry: One has holes, the other does not
+        return false;
+    }
+}
+
+bool PolygonWithHole::same_as(const std::shared_ptr<Polygon> that) const
+{
+    /*
+    Checks if two walls are the same, based on their corners of the walls.
+    Be careful : it will return true for two identical walls that belongs
+    to two different rooms !
+    */
+    if (const std::shared_ptr<const PolygonWithHole> other = std::dynamic_pointer_cast<const PolygonWithHole>(that))
+    {
+        if (!outer_polygon.same_as(std::make_shared<SimplePolygon>(other->get_outer_polygon())))
+        {
+            // outer does not match
+            return false;
+        }
+        if (inner_polygons.size() != other->get_inner_polygons().size())
+        {
+            // number of holes does not match
+            return false;
+        }
+        // both vectors have the same size and can thus be indexed safely by the same variable
+        for (unsigned int i = 0; i < inner_polygons.size(); i++)
+        {
+            // TODO assumes holes to be sorted
+            if (!inner_polygons[i].same_as(std::make_shared<SimplePolygon>(other->get_inner_polygons()[i])))
+            {
+                // a hole does not match
+                return false;
+            }
+        }
+        // everything matches
+        return true;
+    }
+    else
+    {
+        // The two walls are not of the same geometry: One has holes, the other does not
+        return false;
+    }
+}
+
 float Wall3D::area() const
 {
     return wall_geometry->area();
@@ -395,9 +458,7 @@ int Wall<D>::side(const Vectorf<D> &p) const
     return 0;
 }
 
-// TODO
-template<size_t D>
-bool Wall<D>::same_as(const Wall & that) const
+bool Wall2D::same_as(const Wall & that) const
 {
   /*
   Checks if two walls are the same, based on their corners of the walls.
@@ -405,7 +466,7 @@ bool Wall<D>::same_as(const Wall & that) const
   to two different rooms !
   */
 
-  if (dim != that.dim)
+  if (that.dim != 2)
   {
     std::cerr << "The two walls are not of the same dimensions !" << std::endl;
     return false;
@@ -418,6 +479,26 @@ bool Wall<D>::same_as(const Wall & that) const
   }
 
   return (corners - that.corners).cwiseAbs().sum() == 0.;
+}
+
+bool Wall3D::same_as(const Wall & that) const
+{
+    /*
+    Checks if two walls are the same, based on their corners of the walls.
+    Be careful : it will return true for two identical walls that belongs
+    to two different rooms !
+    */
+
+    if (that.dim != 3)
+    {
+        std::cerr << "The two walls are not of the same dimensions !" << std::endl;
+        return false;
+    }
+    // downcast to Wall3D to be able to access wall_geometry
+    // TODO use static_cast?
+    const Wall3D * that_specific = dynamic_cast<const Wall3D *>(&that);
+    // check if the geometry is the same
+    return wall_geometry->same_as(that_specific->wall_geometry);
 }
 
 template<size_t D>
