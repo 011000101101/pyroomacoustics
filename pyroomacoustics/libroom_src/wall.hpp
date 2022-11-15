@@ -73,6 +73,7 @@ class Polygon
                 const Vectorf<3> &p2,
                 Eigen::Ref<Vectorf<3>> intersection
         ) const = 0;
+        virtual bool same_as(const std::shared_ptr<Polygon> that) const = 0;
 
 //        virtual int reflect(
 //                const Vectorf<3> &p,
@@ -115,12 +116,13 @@ public:
     virtual Eigen::Matrix<float, 3, 2> get_basis() const{return basis;}
     virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const{return flat_corners;}
 
-    virtual float area() const;  // compute the area of the wall
+    virtual float area() const override;  // compute the area of the wall
     virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
             const Vectorf<3> &p1,
             const Vectorf<3> &p2,
             Eigen::Ref<Vectorf<3>> intersection
-    ) const;
+    ) const override;
+    virtual bool same_as(const std::shared_ptr<Polygon> that) const override;
 
 //    virtual int reflect(
 //            const Vectorf<D> &p,
@@ -174,15 +176,16 @@ public:
     virtual Eigen::Matrix<float, 3, 2> get_basis() const{return outer_polygon.get_basis();}
     virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const{return outer_polygon.get_flat_corners();}
 
-    SimplePolygon get_outer_polygon() const {return outer_polygon;}
-    std::vector<SimplePolygon> get_inner_polygons() const {return inner_polygons;}
+    const SimplePolygon& get_outer_polygon() const {return outer_polygon;}
+    const std::vector<SimplePolygon>& get_inner_polygons() const {return inner_polygons;}
 
-    virtual float area() const;  // compute the area of the wall
+    virtual float area() const override;  // compute the area of the wall
     virtual int intersection(  // compute the intersection of line segment (p1 <-> p2) with wall
             const Vectorf<3> &p1,
             const Vectorf<3> &p2,
             Eigen::Ref<Vectorf<3>> intersection
-    ) const;
+    ) const override;
+    virtual bool same_as(const std::shared_ptr<Polygon> that) const override;
 
     PolygonWithHole(
             const Eigen::Matrix<float, 3, Eigen::Dynamic> &_corners,
@@ -251,6 +254,7 @@ class Wall: public std::enable_shared_from_this<Wall<D>>
         const Vectorf<D> &p2,
         Eigen::Ref<Vectorf<D>> intersection
         ) const = 0;
+    virtual bool same_as(const Wall & that) const = 0;
 
     // utility methods
     int intersects(
@@ -263,7 +267,6 @@ class Wall: public std::enable_shared_from_this<Wall<D>>
         Eigen::Ref<Vectorf<D>> p_reflected
         ) const;
     int side(const Vectorf<D> &p) const;
-    bool same_as(const Wall & that) const;
 
     Vectorf<D> normal_reflect(
         const Vectorf<D> &start,
@@ -289,8 +292,9 @@ class Wall2D: public Wall<2>, public std::enable_shared_from_this<Wall2D>
                 const Vectorf<2> &p2,
                 Eigen::Ref<Vectorf<2>> intersection
         ) const override;
+        virtual bool same_as(const Wall & that) const override;
 
-        // Constructor
+    // Constructor
         Wall2D(
                 const Eigen::Matrix<float, 2, Eigen::Dynamic> &_corners,
                 const Eigen::ArrayXf &_absorption,
@@ -325,6 +329,7 @@ class Wall3D: public Wall<3>, public std::enable_shared_from_this<Wall3D>
                 const Vectorf<3> &p2,
                 Eigen::Ref<Vectorf<3>> intersection
         ) const override;
+        virtual bool same_as(const Wall & that) const override;
 
         // Constructor
         Wall3D(
