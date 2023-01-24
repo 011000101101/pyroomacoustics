@@ -610,6 +610,9 @@ from __future__ import division, print_function
 import math
 import warnings
 
+from multiprocessing import get_context
+from functools import partial
+
 import numpy as np
 import scipy.spatial as spatial
 
@@ -726,6 +729,104 @@ def find_non_convex_walls(walls):
     return [i for i in range(len(walls)) if not in_convex_hull[i]]
 
 
+def _image_source_model(
+    source_pos: np.ndarray, room_engine_args: list, microphone_locations: list, random_ism_needed: bool,
+    max_rand_disp: int
+) -> tuple[list, dict[str, object]]:
+    """
+
+    Parameters
+    ----------
+    source_pos              The position of the sound source in 3d
+                                [first argument, as it is passed as positional argument by pool.map, and partial keeps the
+                                 assigned arguments in the signature]
+    room_engine_args        everything needed to create an (structurally, without state) identical copy of the room engine,
+                                i.e. the initializer arguments for libroom.Room
+    microphone_locations    locations of the microphones in the room, in order, as np.ndarrays of shape [3, 1]
+    random_ism_needed       flag to enable small random permutations on images
+    max_rand_disp           maximum random displacement in case of randomized ism
+
+    Returns
+    -------
+    visibility of each mic from the specified source as list of bools,
+    and values to be written back into the sound-source object of the room as key-value pairs
+        (or None if no mic is visible from the source)
+    """
+    # create temporary clone of room engine to avoid interference between subprocesses
+    room_engine_tmp = libroom.Room(*room_engine_args)
+    # create new mics, as mics themselves log rt hits
+    for m in microphone_locations:
+        room_engine_tmp.add_mic(m)
+    n_sources = room_engine_tmp.image_source_model(source_pos)
+    if n_sources > 0:
+        # Copy to python managed memory
+        source_data = {
+            'images': room_engine_tmp.sources.copy(),
+            'orders': room_engine_tmp.orders.copy(),
+            'orders_xyz': room_engine_tmp.orders_xyz.copy(),
+            'walls': room_engine_tmp.gen_walls.copy(),
+            'damping': room_engine_tmp.attenuations.copy()
+        }
+
+        # if randomized image method is selected, add a small random
+        # displacement to the image sources
+        if random_ism_needed:
+
+            n_images = np.shape(room_engine_tmp.sources)[1]
+
+            # maximum allowed displacement is 8cm
+            max_disp = max_rand_disp
+
+            # add a random displacement to each cartesian coordinate
+            disp = np.random.uniform(-max_disp, max_disp, size=(3, n_images))
+            source_data['images'] += disp
+    else:
+        source_data = None
+
+    return room_engine_tmp.visible_mics.copy(), source_data
+
+
+def _ray_tracing_one_source(
+    source_pos: np.ndarray, room_engine_args: list, n_rays: int, microphone_locations: list
+) -> list:
+    """
+    [define at top-level to be pickle-able for multiprocessing]
+    computes the ray tracing for a single source in isolation to allow for multiprocessing
+    Parameters
+    ----------
+    source_pos              The position of the sound source in 3d
+                                [first argument, as it is passed as positional argument by pool.map, and partial keeps the
+                                 assigned arguments in the signature]
+    room_engine_args        everything needed to create an (structurally, without state) identical copy of the room engine,
+                                i.e. the initializer arguments for libroom.Room
+    n_rays                  number of rays to cast
+    microphone_locations    locations of the microphones in the room, in order, as np.ndarrays of shape [3, 1]
+
+    Returns
+    -------
+    The energy histograms of all microphones from this sound source
+    """
+    # create temporary clone of room engine to avoid interference between subprocesses
+    room_engine_tmp = libroom.Room(*room_engine_args)
+    # create new mics, as mics themselves log rt hits
+    for m in microphone_locations:
+        room_engine_tmp.add_mic(m)
+    room_engine_tmp.ray_tracing(n_rays, source_pos)
+    # perform raytracing for one source
+    rt_histograms_one_source = []
+    for r in range(len(microphone_locations)):
+        rt_histograms_one_source.append([])
+        for h in room_engine_tmp.microphones[r].histograms:
+            # get a copy of the histogram
+            rt_histograms_one_source[r].append(h.get_hist())
+    # cleanup
+    # # reset all the receivers' histograms
+    # room_engine_tmp.reset_mics()
+    del room_engine_tmp
+
+    return rt_histograms_one_source
+
+
 class Room(object):
     """
     A Room object has as attributes a collection of
@@ -811,6 +912,7 @@ class Room(object):
         ray_tracing=False,
         use_rand_ism=False,
         max_rand_disp=0.08,
+        num_processes=1
     ):
 
         self.walls = walls
@@ -833,6 +935,7 @@ class Room(object):
             ray_tracing,
             use_rand_ism,
             max_rand_disp,
+            num_processes
         )
 
         # initialize the C++ room engine
@@ -862,6 +965,7 @@ class Room(object):
         ray_tracing,
         use_rand_ism,
         max_rand_disp,
+        num_processes
     ):
 
         self.fs = fs
@@ -912,6 +1016,7 @@ class Room(object):
 
         # initialize the attribute for the impulse responses
         self.rir = None
+        self.num_processes = num_processes
 
     def _init_room_engine(self, *args):
 
@@ -1973,43 +2078,80 @@ class Room(object):
         if not self.simulator_state["ism_needed"]:
             return
 
-        self.visibility = []
+        if self.num_processes == 1 or self.dim == 2:
+            self.visibility = []
+            for source in self.sources:
+                n_sources = self.room_engine.image_source_model(source.position)
+                if n_sources > 0:
+                    # Copy to python managed memory
+                    source.images = self.room_engine.sources.copy()
+                    source.orders = self.room_engine.orders.copy()
+                    source.orders_xyz = self.room_engine.orders_xyz.copy()
+                    source.walls = self.room_engine.gen_walls.copy()
+                    source.damping = self.room_engine.attenuations.copy()
+                    source.generators = -np.ones(source.walls.shape)
+                    # if randomized image method is selected, add a small random
+                    # displacement to the image sources
+                    if self.simulator_state["random_ism_needed"]:
 
-        for source in self.sources:
+                        n_images = np.shape(source.images)[1]
 
-            n_sources = self.room_engine.image_source_model(source.position)
+                        # maximum allowed displacement is 8cm
+                        max_disp = self.max_rand_disp
 
-            if n_sources > 0:
-
-                # Copy to python managed memory
-                source.images = self.room_engine.sources.copy()
-                source.orders = self.room_engine.orders.copy()
-                source.orders_xyz = self.room_engine.orders_xyz.copy()
-                source.walls = self.room_engine.gen_walls.copy()
-                source.damping = self.room_engine.attenuations.copy()
-                source.generators = -np.ones(source.walls.shape)
-
-                # if randomized image method is selected, add a small random
-                # displacement to the image sources
-                if self.simulator_state["random_ism_needed"]:
-
-                    n_images = np.shape(source.images)[1]
-
-                    # maximum allowed displacement is 8cm
-                    max_disp = self.max_rand_disp
-                   
-                    # add a random displacement to each cartesian coordinate
-                    disp = np.random.uniform(-max_disp, max_disp, size=(3, n_images))
-                    source.images += disp
-                                             
-  
+                        # add a random displacement to each cartesian coordinate
+                        disp = np.random.uniform(-max_disp, max_disp, size=(3, n_images))
+                        source.images += disp
+                    # TODO shifted indentation outward. correct?
+                    #   see usage in compute_rir:
+                    #    '''for s, src in enumerate(self.sources):'''
+                    #    [...]
+                    #    '''    vis = self.visibility[s][m, :].astype(np.int32)'''
+                    #   -> one list element per source required, therefore visibility must always be appended
                 self.visibility.append(self.room_engine.visible_mics.copy())
+        else:
+            room_engine_args = [
+                self.walls,
+                find_non_convex_walls(self.walls),
+                [],
+                self.c,  # speed of sound
+                self.max_order,
+                self.rt_args["energy_thres"],
+                self.rt_args["time_thres"],
+                self.rt_args["receiver_radius"],
+                self.rt_args["hist_bin_size"],
+                self.simulator_state["ism_needed"] and self.simulator_state["rt_needed"],
+            ]
+            _image_source_model_partial = partial(
+                _image_source_model,
+                room_engine_args=room_engine_args,
+                microphone_locations=[self.mic_array.R[:, None, m] for m in range(len(self.mic_array))],
+                random_ism_needed=self.simulator_state["random_ism_needed"],
+                max_rand_disp=self.max_rand_disp
+            )
+            with get_context("spawn").Pool(self.num_processes if self.num_processes > 0 else None) as p:
+                # rt_histograms are now in shape [src][mic][hist]
+                return_values = p.map(
+                    _image_source_model_partial,
+                    [src.position for src in self.sources]
+                )
+            visibility, source_data_list = zip(*return_values)
+            self.visibility = list(visibility)
+            for source, source_data in zip(self.sources, source_data_list):
+                if source_data is not None:
+                    source.images = source_data['images']
+                    source.orders = source_data['orders']
+                    source.orders_xyz = source_data['orders_xyz']
+                    source.walls = source_data['walls']
+                    source.damping = source_data['damping']
+                    source.generators = -np.ones(source.walls.shape)
 
-                # We need to check that microphones are indeed in the room
-                for m in range(self.mic_array.R.shape[1]):
-                    # if not, it's not visible from anywhere!
-                    if not self.is_inside(self.mic_array.R[:, m]):
-                        self.visibility[-1][m, :] = 0
+        # We need to check that microphones are indeed in the room
+        for m in range(self.mic_array.R.shape[1]):
+            # if not, it's not visible from anywhere!
+            if not self.is_inside(self.mic_array.R[:, m]):
+                for s in self.sources:
+                    self.visibility[s][m, :] = 0
 
         # Update the state
         self.simulator_state["ism_done"] = True
@@ -2022,17 +2164,50 @@ class Room(object):
         # this will be a list of lists with
         # shape (n_mics, n_src, n_directions, n_bands, n_time_bins)
         self.rt_histograms = [[] for r in range(self.mic_array.M)]
+        if self.num_processes == 1 or self.dim == 2:
+            for s, src in enumerate(self.sources):
+                self.room_engine.ray_tracing(self.rt_args["n_rays"], src.position)
 
-        for s, src in enumerate(self.sources):
-            self.room_engine.ray_tracing(self.rt_args["n_rays"], src.position)
+                for r in range(self.mic_array.M):
+                    self.rt_histograms[r].append([])
+                    for h in self.room_engine.microphones[r].histograms:
+                        # get a copy of the histogram
+                        self.rt_histograms[r][s].append(h.get_hist())
+                # reset all the receivers' histograms
+                self.room_engine.reset_mics()
+        else:
+            room_engine_args = [
+                self.walls,
+                find_non_convex_walls(self.walls),
+                [],
+                self.c,  # speed of sound
+                self.max_order,
+                self.rt_args["energy_thres"],
+                self.rt_args["time_thres"],
+                self.rt_args["receiver_radius"],
+                self.rt_args["hist_bin_size"],
+                self.simulator_state["ism_needed"] and self.simulator_state["rt_needed"],
+            ]
+            _ray_tracing_one_source_partial = partial(
+                _ray_tracing_one_source,
+                room_engine_args=room_engine_args,
+                n_rays=self.rt_args['n_rays'],
+                microphone_locations=[self.mic_array.R[:, None, m] for m in range(len(self.mic_array))]
+            )
+            with get_context("spawn").Pool(self.num_processes if self.num_processes > 0 else None) as p:
+                # rt_histograms are now in shape [src][mic][hist]
+                rt_histograms = p.map(
+                    _ray_tracing_one_source_partial,
+                    [src.position for src in self.sources]
+                )
 
+            # permute to shape [mic][src][hist]
             for r in range(self.mic_array.M):
-                self.rt_histograms[r].append([])
-                for h in self.room_engine.microphones[r].histograms:
-                    # get a copy of the histogram
-                    self.rt_histograms[r][s].append(h.get_hist())
-            # reset all the receivers' histograms
-            self.room_engine.reset_mics()
+                self.rt_histograms[r] = [
+                    rt_histograms[s][r]
+                    for s
+                    in range(len(self.sources))
+                ]
 
         # update the state
         self.simulator_state["rt_done"] = True

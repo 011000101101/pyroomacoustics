@@ -501,6 +501,28 @@ bool Wall3D::same_as(const Wall & that) const
     return wall_geometry->same_as(that_specific->wall_geometry);
 }
 
+
+Eigen::Matrix<float, 2, Eigen::Dynamic> Wall2D::get_corners() const
+{
+    return corners;
+}
+
+Eigen::Matrix<float, 3, Eigen::Dynamic> Wall3D::get_corners() const
+{
+    return  wall_geometry->get_corners();
+}
+
+
+std::vector<Eigen::Matrix<float, 2, Eigen::Dynamic>> Wall2D::get_holes() const
+{
+    return std::vector<Eigen::Matrix<float, 2, Eigen::Dynamic>>();
+}
+
+std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> Wall3D::get_holes() const
+{
+    return  wall_geometry->get_holes();
+}
+
 template<size_t D>
 Vectorf<D> Wall<D>::normal_reflect(
     const Vectorf<D> &start,

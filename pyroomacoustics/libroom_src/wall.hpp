@@ -60,6 +60,7 @@ class Polygon
         //getters
         virtual Eigen::Matrix<float, 3, 1> get_normal() const = 0;
         virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const = 0;
+        virtual std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> get_holes() const = 0;
         virtual Eigen::Matrix<float, 3, 1> get_origin() const = 0;
         virtual Eigen::Matrix<float, 3, 2> get_basis() const = 0;
         virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const = 0;
@@ -112,6 +113,9 @@ public:
     //getters
     virtual Eigen::Matrix<float, 3, 1> get_normal() const{return normal;}
     virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const{return corners;}
+    virtual std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> get_holes() const{
+        return std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>>();
+    }
     virtual Eigen::Matrix<float, 3, 1> get_origin() const{return origin;}
     virtual Eigen::Matrix<float, 3, 2> get_basis() const{return basis;}
     virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const{return flat_corners;}
@@ -172,6 +176,13 @@ public:
     //getters
     virtual Eigen::Matrix<float, 3, 1> get_normal() const{return outer_polygon.get_normal();}
     virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const{return outer_polygon.get_corners();}
+    virtual std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> get_holes() const{
+        std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> holes;
+        for (unsigned i=0; i < inner_polygons.size(); i++) {
+            holes.push_back(inner_polygons[i].get_corners());
+        }
+        return holes;
+    }
     virtual Eigen::Matrix<float, 3, 1> get_origin() const{return outer_polygon.get_origin();}
     virtual Eigen::Matrix<float, 3, 2> get_basis() const{return outer_polygon.get_basis();}
     virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_flat_corners() const{return outer_polygon.get_flat_corners();}
@@ -255,6 +266,8 @@ class Wall: public std::enable_shared_from_this<Wall<D>>
         Eigen::Ref<Vectorf<D>> intersection
         ) const = 0;
     virtual bool same_as(const Wall & that) const = 0;
+    virtual Eigen::Matrix<float, D, Eigen::Dynamic> get_corners() const = 0;
+    virtual std::vector<Eigen::Matrix<float, D, Eigen::Dynamic>> get_holes() const = 0;
 
     // utility methods
     int intersects(
@@ -293,6 +306,8 @@ class Wall2D: public Wall<2>, public std::enable_shared_from_this<Wall2D>
                 Eigen::Ref<Vectorf<2>> intersection
         ) const override;
         virtual bool same_as(const Wall & that) const override;
+        virtual Eigen::Matrix<float, 2, Eigen::Dynamic> get_corners() const override;
+        virtual std::vector<Eigen::Matrix<float, 2, Eigen::Dynamic>> get_holes() const override;
 
     // Constructor
         Wall2D(
@@ -330,6 +345,8 @@ class Wall3D: public Wall<3>, public std::enable_shared_from_this<Wall3D>
                 Eigen::Ref<Vectorf<3>> intersection
         ) const override;
         virtual bool same_as(const Wall & that) const override;
+        virtual Eigen::Matrix<float, 3, Eigen::Dynamic> get_corners() const override;
+        virtual std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>> get_holes() const override;
 
         // Constructor
         Wall3D(

@@ -255,6 +255,20 @@ PYBIND11_MODULE(libroom, m) {
 //  py::class_<Wall3D> wall_cls(m, "Wall");
 
   wall_cls
+    .def(py::pickle(
+        [](const Wall3D& w) {  // dump
+            return py::make_tuple(w.get_corners(), w.get_holes(), w.absorption, w.scatter, w.name);
+        },
+        [](py::tuple t) {  // load
+            return Wall3D{
+                t[0].cast<Eigen::Matrix<float,3,Eigen::Dynamic>>(),
+                t[1].cast<std::vector<Eigen::Matrix<float, 3, Eigen::Dynamic>>>(),
+                t[2].cast<Eigen::ArrayXf>(),
+                t[3].cast<Eigen::ArrayXf>(),
+                t[4].cast<std::string>(),
+            };
+        }
+    ))
     .def(
         py::init<
             const Eigen::Matrix<float,3,Eigen::Dynamic> &,
