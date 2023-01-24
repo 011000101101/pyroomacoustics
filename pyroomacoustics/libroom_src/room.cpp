@@ -1020,7 +1020,7 @@ void Room<D>::simul_ray(
           auto p_hit = (1 - sqrt(1 - mic_radius_sq / std::max(mic_radius_sq, r_sq)));
           energy = transmitted / (r_sq * p_hit);
           // energy = transmitted / (travel_dist_at_mic - sqrtf(fmaxf(0.f, travel_dist_at_mic * travel_dist_at_mic - mic_radius_sq)));
-          microphones[k].log_histogram(travel_dist_at_mic, energy, start);
+          microphones[k].log_histogram(travel_dist_at_mic, energy, start);  // TODO check here for parallelization
         }
       }
 
