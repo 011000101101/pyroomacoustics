@@ -956,7 +956,7 @@ class Room(object):
         ray_tracing=False,
         use_rand_ism=False,
         max_rand_disp=0.08,
-        num_processes=1
+        num_processes: int =1
     ):
 
         self.walls = walls
@@ -1009,7 +1009,7 @@ class Room(object):
         ray_tracing,
         use_rand_ism,
         max_rand_disp,
-        num_processes
+        num_processes: int =1
     ):
 
         self.fs = fs
@@ -2290,7 +2290,7 @@ class Room(object):
         for m in range(self.mic_array.R.shape[1]):
             # if not, it's not visible from anywhere!
             if not self.is_inside(self.mic_array.R[:, m]):
-                for s in self.sources:
+                for s in range(len(self.sources)):
                     self.visibility[s][m, :] = 0
 
         # Update the state
