@@ -47,6 +47,7 @@ size_t number_image_sources_3(size_t max_order) {
   return 1 + 2 * max_order * (2 * max_order_sq + 3 * max_order + 4) / 3;
 }
 
+template<>
 Room<3>::Room(
     const std::vector<Wall3D> &_walls,
     const std::vector<int> &_obstructing_walls,
@@ -75,6 +76,7 @@ Room<3>::Room(
   init();
 }
 
+template<>
 Room<2>::Room(
         const std::vector<Wall2D> &_walls,
         const std::vector<int> &_obstructing_walls,

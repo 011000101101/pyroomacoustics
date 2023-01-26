@@ -309,7 +309,7 @@ void Wall<D>::init()
 }
 
 template<size_t D>
-Wall<D>::Wall<D>(
+Wall<D>::Wall(
     const Eigen::Matrix<float,D,Eigen::Dynamic> &_corners,
     const Eigen::ArrayXf &_absorption,
     const Eigen::ArrayXf &_scatter,
